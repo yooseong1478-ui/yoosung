@@ -1,0 +1,4 @@
+config.json
+sources/
+output/
+__pycache__/
