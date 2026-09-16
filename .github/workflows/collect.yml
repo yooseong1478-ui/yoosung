@@ -1,0 +1,26 @@
+name: collect-naver-sources
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/naver-blog-correction-wear-bot-xqnsqm]
+    paths: [".github/workflows/collect.yml", "naver_blog_bot/collect_ci.py", "naver_blog_bot/fetch_sources.py", "naver_blog_bot/config.example.json"]
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r naver_blog_bot/requirements.txt
+      - name: Collect search results, top posts and product pages
+        working-directory: naver_blog_bot
+        run: python3 collect_ci.py config.example.json
+      - name: Commit collected sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add naver_blog_bot/collected
+          git commit -m "chore: collect Naver sources [skip ci]" || echo "nothing to commit"
+          git push
