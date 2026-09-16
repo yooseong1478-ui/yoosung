@@ -1,0 +1,21 @@
+{
+  "name": "Naver Blog AI Team (daily draft)",
+  "nodes": [
+    {"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 6 * * *"}]}},
+     "name": "매일 06:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0]},
+    {"parameters": {"command": "cd /ABSOLUTE/PATH/naver_blog_bot && python3 pipeline.py"},
+     "name": "AI 팀: 리서치→글→이미지→조립", "type": "n8n-nodes-base.executeCommand", "typeVersion": 1, "position": [260, 0]},
+    {"parameters": {"command": "cd /ABSOLUTE/PATH/naver_blog_bot && python3 publish_post.py \"$(cat work/LATEST)/final.json\" --draft --headless --shot-dir \"$(cat work/LATEST)/shots\""},
+     "name": "네이버 임시저장", "type": "n8n-nodes-base.executeCommand", "typeVersion": 1, "position": [520, 0]},
+    {"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 9 * * 1"}]}},
+     "name": "매주 월 09:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 220]},
+    {"parameters": {"command": "cd /ABSOLUTE/PATH/naver_blog_bot && python3 improve_prompts.py stats/latest.csv --apply"},
+     "name": "통계 분석→규칙 제안", "type": "n8n-nodes-base.executeCommand", "typeVersion": 1, "position": [260, 220]}
+  ],
+  "connections": {
+    "매일 06:00": {"main": [[{"node": "AI 팀: 리서치→글→이미지→조립", "type": "main", "index": 0}]]},
+    "AI 팀: 리서치→글→이미지→조립": {"main": [[{"node": "네이버 임시저장", "type": "main", "index": 0}]]},
+    "매주 월 09:00": {"main": [[{"node": "통계 분석→규칙 제안", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

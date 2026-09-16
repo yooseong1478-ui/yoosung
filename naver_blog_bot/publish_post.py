@@ -25,6 +25,8 @@ SELECTORS = {
     "publish_open": "button:has-text('발행')",
     "publish_confirm": "button:has-text('발행'):not(:has-text('취소')) >> nth=-1",
     "tag_input": "input[placeholder*='태그'], .tag_input input",
+    "save_draft": "button:has-text('저장'):not(:has-text('임시저장 글'))",
+    "image_button": "button[data-name='image'], button:has-text('사진'), .se-toolbar-item-image button",
 }
 
 
@@ -48,8 +50,30 @@ def strip_markdown(body: str) -> list[str]:
     return out
 
 
-def type_paragraphs(page, paragraphs):
+def insert_image(page, frame, path: Path):
+    """에디터 툴바의 사진 버튼 → 파일 선택창에 파일을 넣는다. 실패하면 False."""
+    try:
+        with page.expect_file_chooser(timeout=8_000) as fc:
+            frame.locator(SELECTORS["image_button"]).first.click()
+        fc.value.set_files(str(path))
+        page.wait_for_timeout(2500)          # 업로드 대기
+        page.keyboard.press("End")
+        page.keyboard.press("Enter")
+        return True
+    except Exception as e:  # noqa: BLE001
+        print(f"이미지 삽입 실패 {path.name}: {e}", file=sys.stderr)
+        return False
+
+
+def type_paragraphs(page, paragraphs, frame=None, images_dir: Path | None = None):
     for para in paragraphs:
+        m = re.fullmatch(r"\[\[IMG:(.+?)\]\]", para.strip()) if para else None
+        if m and images_dir and (images_dir / m.group(1)).exists():
+            if insert_image(page, frame or page, images_dir / m.group(1)):
+                continue
+            para = f"(이미지 넣기: {m.group(1)})"
+        elif para and para.strip().startswith("[[PHOTO:"):
+            para = "(사진 넣기: " + para.strip()[8:-2] + ")"
         if para:
             page.keyboard.insert_text(para)
         page.keyboard.press("Enter")
@@ -61,6 +85,7 @@ def main():
     ap.add_argument("post_json")
     ap.add_argument("--blog-id", help="네이버 블로그 아이디 (생략 시 로그인한 계정의 글쓰기 페이지 사용)")
     ap.add_argument("--publish", action="store_true", help="발행 버튼까지 누름. 없으면 입력 후 대기")
+    ap.add_argument("--draft", action="store_true", help="발행하지 않고 임시저장(저장 버튼)까지만 하고 종료")
     ap.add_argument("--headless", action="store_true")
     ap.add_argument("--cookies", default=os.environ.get("NAVER_COOKIES", ""),
                     help="브라우저에서 복사한 네이버 쿠키 문자열 (NID_AUT=...; NID_SES=...). CI 발행용, 환경변수 NAVER_COOKIES 로도 지정")
@@ -85,6 +110,7 @@ def main():
     title = post.get("title") or post.get("제목") or ""
     body = post.get("body") or post.get("본문") or ""
     tags = (post.get("hashtags") or post.get("해시태그") or "").replace("#", " ").split()
+    images_dir = Path(post["images_dir"]) if post.get("images_dir") else src.parent / "images"
     if not title or not body:
         sys.exit("제목/본문이 비어 있습니다.")
 
@@ -143,9 +169,22 @@ def main():
         frame.locator(SELECTORS["title"]).first.click()
         page.keyboard.insert_text(title)
         frame.locator(SELECTORS["body"]).first.click()
-        type_paragraphs(page, strip_markdown(body))
+        type_paragraphs(page, strip_markdown(body), frame, images_dir)
         print(f"입력 완료: 제목 {len(title)}자, 본문 {len(body)}자", file=sys.stderr)
         shot("filled")
+
+        if args.draft:
+            btn = frame.locator(SELECTORS["save_draft"]).first
+            if btn.count():
+                btn.click()
+                page.wait_for_timeout(2000)
+                shot("draft_saved")
+                print("임시저장 완료. 네이버 블로그 글쓰기 → 임시저장 글 목록에서 검수 후 발행하세요.", file=sys.stderr)
+            else:
+                shot("draft_button_missing")
+                print("저장 버튼을 찾지 못했습니다. SELECTORS['save_draft'] 를 확인하세요.", file=sys.stderr)
+            ctx.close()
+            return
 
         if not args.publish and args.headless:
             print("헤드리스 점검 모드: 입력까지만 확인하고 종료합니다 (--publish 없음).", file=sys.stderr)

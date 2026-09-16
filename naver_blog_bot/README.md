@@ -119,6 +119,43 @@ python3 publish_post.py output/남자보정속옷_20260916_agent.json --publish 
 3. Actions 탭 → `publish-naver-post` → Run workflow. `publish` 를 끄면 입력까지만 점검하고 스크린샷을 아티팩트로 남기며,
    켜면 실제 발행합니다. 로그인 페이지로 튕기면 쿠키 만료 또는 해외 IP 새 기기 인증이므로 로컬 실행으로 전환하세요.
 
+
+## AI 팀 시스템 (주제 한 줄 → 임시저장)
+
+영상 "클로드 코워크 + n8n 블로그 자동화" 구조를 `claude -p` 위에 그대로 옮긴 것입니다.
+팀장 1명과 팀원 4명이 `team/` 폴더의 역할 파일대로 순서대로 일합니다.
+
+| 단계 | 파일 | 하는 일 | 결과 |
+|---|---|---|---|
+| 팀장 | `team/00_lead.md`, `pipeline.py` | 주제를 꺼내 팀원에게 순서대로 시키고 수치로 검수, 문제 있으면 해당 팀원만 재작업 | `work/<날짜_키워드>/` |
+| 말투 | `team/01_style_guide.md`, `make_style_guide.py` | 내가 쓴 글 2~3편으로 스타일 가이드 생성 | 스타일 가이드 |
+| SEO 규칙 | `team/02_seo_rules.md` | 상위노출 실측 수치 기반 규칙 (키워드별로 리서치가 갱신) | 규칙 |
+| 1 리서치 | `team/03_researcher.md` | 세부 키워드 후보, 상위글 3개 패턴 수치, 제품 사실+출처 | `research.md` |
+| 2 글쓰기 | `team/04_writer.md` | 말투+SEO+리서치를 반영해 글 작성, 사진 자리만 표시 | `post.md` |
+| 3 이미지 | `team/05_image_maker.md`, `make_images.py` | 사진 자리마다 슬라이드 설계 → 1080x1080 PNG 렌더링, 실사 자리는 photo 로 표시 | `slides.json`, `images/` |
+| 4 조립 | `team/06_assembler.md`(문서), `pipeline.py` 코드 | 사진 자리에 이미지 토큰 삽입, 해시태그 정리 | `final.md`, `final.json` |
+| 5 발행 | `publish_post.py --draft` | 에디터에 글+이미지 입력 후 **임시저장**까지만. 발행 버튼은 사람이 | 임시저장 글 |
+| 주간 | `team/07_analyst.md`, `improve_prompts.py` | 네이버 통계로 잘된 글/안 된 글 비교, 다음 주제와 규칙 수정 제안 | `work/analysis_*.md` |
+
+```bash
+# 0) 준비: topics.md 에 주제 한 줄 추가 (- [ ] 키워드 | 제품URL | 메모)
+python3 make_style_guide.py my_posts/          # (선택) 내 글 폴더로 말투 파일 생성
+# 1) 수집: GitHub Actions 'collect-naver-sources' 실행 → collected/<키워드>/ 커밋 → git pull
+# 2) 팀 실행
+python3 pipeline.py                            # 맨 위 미완료 주제 → work/<날짜_키워드>/final.json
+python3 pipeline.py --browser                  # 수집 자료 없으면 브라우저 에이전트가 직접 리서치
+python3 pipeline.py --steps write,image,assemble --work work/20260916_남자보정속옷   # 일부 재작업
+# 3) 임시저장 (로그인 1회 후 자동)
+python3 publish_post.py "$(cat work/LATEST)/final.json" --draft
+# 4) 매주: 네이버 통계 내려받아 stats/latest.csv 로 저장 후
+python3 improve_prompts.py stats/latest.csv --apply
+```
+
+- `[[PHOTO:설명]]` 자리는 실사가 필요한 곳이라 에디터에 "(사진 넣기: 설명)" 문구로 들어갑니다. 임시저장 글을 열어 사진으로 바꾸세요.
+- 슬라이드 이미지는 사진 버튼 → 파일 선택으로 자동 삽입합니다. 에디터 마크업이 바뀌면 `SELECTORS["image_button"]` 을 고치세요.
+- n8n 으로 스케줄링하려면 `n8n/blog_pipeline.json` 을 임포트하고 명령의 `/ABSOLUTE/PATH` 만 바꾸면 됩니다 (매일 06:00 생성+임시저장, 매주 월 통계 분석).
+  Windows 작업 스케줄러나 cron 으로 같은 두 명령을 걸어도 됩니다.
+
 ## 이 환경(Claude Code 웹)에서 바로 돌리려면
 
 claude.ai/code 의 환경 설정에서 네트워크 정책을 "제한 없음"으로 바꾸거나 허용 도메인에

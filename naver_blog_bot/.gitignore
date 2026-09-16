@@ -4,3 +4,7 @@ output/
 __pycache__/
 .browser_profile/
 node_modules/
+work/
+shots/
+stats/
+my_posts/
