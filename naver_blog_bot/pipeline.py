@@ -151,6 +151,8 @@ def step_images(work, keyword, cfg):
         slides[i - 1]["placeholder"] = ph
     (work / "slides.json").write_text(json.dumps(slides, ensure_ascii=False, indent=2), encoding="utf-8")
     from make_images import render
+    for old in (work / "images").glob("slide_*.png"):   # 이전 실행 잔재 제거
+        old.unlink()
     files = render(slides, work / "images", label=cfg.get("series_label", keyword), blog=cfg.get("blog_name", ""))
     (work / "slides.json").write_text(json.dumps(slides, ensure_ascii=False, indent=2), encoding="utf-8")
     n_photo = sum(1 for s in slides if s.get("type") == "photo")
