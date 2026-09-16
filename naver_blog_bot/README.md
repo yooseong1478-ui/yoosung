@@ -30,7 +30,31 @@ claude --version                      # Claude Code CLI 로그인 상태여야 �
 네이버 검색 API 키는 https://developers.naver.com 에서 "검색" 애플리케이션을 등록하면 발급됩니다.
 HTML 파싱은 네이버 마크업이 바뀌면 깨질 수 있으니 API 사용을 권장합니다.
 
-## 실행
+## 방식 A: `claude -p` + 브라우저 (Claude가 직접 웹을 열어 읽음, 권장)
+
+Claude Code 헤드리스 모드에 Playwright MCP 브라우저를 붙여, Claude가 스스로
+네이버 블로그 검색 → 상위 글 3개 → 제품 페이지를 열어 읽고 글까지 씁니다. 파서가 없어 마크업 변경에 강합니다.
+
+```bash
+python3 run_agent.py                 # 결과: output/<키워드>_<날짜>_agent.md / .json / .raw.md
+python3 run_agent.py --dry-run       # 에이전트 프롬프트만 출력
+python3 run_agent.py --max-turns 60  # 글이 길어 도구 호출이 많이 필요하면 상향
+```
+
+내부적으로 다음을 실행합니다 (`.mcp.json` 은 `npx @playwright/mcp@latest --headless` 설정).
+
+```bash
+claude -p --output-format text \
+  --mcp-config .mcp.json --strict-mcp-config \
+  --allowedTools mcp__playwright --permission-mode dontAsk --max-turns 40
+```
+
+- Node 18 이상과 Chromium이 필요합니다. 처음 한 번 `npx playwright install chromium` 을 실행하세요.
+- root 계정(도커 등)에서 돌리면 `.mcp.json` 의 args 에 `"--no-sandbox"` 를 추가해야 합니다.
+- 네이버가 봇으로 판단해 캡차를 띄우면 `--headless` 를 빼고 창을 띄운 채 실행하세요.
+- 에이전트 프롬프트는 `prompts/agent_prompt.md` 에 있고, 광고·카페 글 제외, 모바일 본문 페이지 사용, 제품 페이지 사실만 사용 규칙이 들어 있습니다.
+
+## 방식 B: 파이썬 수집 + `claude -p` 생성
 
 ```bash
 ./run.sh                      # 수집 + 생성 한 번에
@@ -48,14 +72,15 @@ python3 generate_post.py --dry-run   # claude 호출 없이 프롬프트만 저�
 
 ## `claude -p` 동작
 
-`generate_post.py` 는 프롬프트 전체를 표준입력으로 넘겨 다음을 실행합니다.
+`run_agent.py` 와 `generate_post.py` 는 프롬프트 전체를 표준입력으로 넘겨 다음을 실행합니다.
 
 ```bash
 claude -p --output-format text [--model <model>]
 ```
 
 `-p`(`--print`)는 대화창 없이 한 번 응답하고 종료하는 모드라 cron, GitHub Actions, n8n 등
-어떤 스케줄러에서도 호출할 수 있습니다. 로그인은 `claude` 를 한 번 실행해 두면 유지되고,
+어떤 스케줄러에서도 호출할 수 있습니다. 방식 A는 여기에 `--mcp-config` 로 브라우저 도구를 붙이고
+`--allowedTools mcp__playwright` 로 도구 사용을 미리 허용한 것입니다. 로그인은 `claude` 를 한 번 실행해 두면 유지되고,
 CI 서버라면 `ANTHROPIC_API_KEY` 환경변수로도 인증됩니다.
 
 ## 글 작성 규칙 (prompts/writer_prompt.md)
