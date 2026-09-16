@@ -104,6 +104,19 @@ python3 publish_post.py output/남자보정속옷_20260916_agent.json --publish 
 - 네이버 에디터 셀렉터는 `publish_post.py` 의 `SELECTORS` 에 모여 있어 마크업이 바뀌면 그 부분만 고치면 됩니다.
 - 자동발행은 네이버 이용약관상 제재 대상이 될 수 있으니 계정 보호를 위해 하루 발행 수를 낮게 유지하세요.
 
+### 로컬 한 줄 실행
+```bash
+./publish_local.sh samples/남자보정속옷_뉴슬림엑스.md            # 로그인 → 입력 → 검토 대기
+./publish_local.sh samples/남자보정속옷_뉴슬림엑스.md --publish  # 로그인 → 입력 → 발행
+```
+
+### GitHub Actions 로 발행 (PC 없이)
+1. PC 브라우저에서 네이버에 로그인한 뒤 개발자도구 → Application → Cookies → `https://www.naver.com` 에서
+   `NID_AUT` 와 `NID_SES` 값을 복사해 `NID_AUT=값; NID_SES=값` 형태로 만듭니다.
+2. GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret 에 이름 `NAVER_COOKIES` 로 저장합니다.
+3. Actions 탭 → `publish-naver-post` → Run workflow. `publish` 를 끄면 입력까지만 점검하고 스크린샷을 아티팩트로 남기며,
+   켜면 실제 발행합니다. 로그인 페이지로 튕기면 쿠키 만료 또는 해외 IP 새 기기 인증이므로 로컬 실행으로 전환하세요.
+
 ## 이 환경(Claude Code 웹)에서 바로 돌리려면
 
 claude.ai/code 의 환경 설정에서 네트워크 정책을 "제한 없음"으로 바꾸거나 허용 도메인에

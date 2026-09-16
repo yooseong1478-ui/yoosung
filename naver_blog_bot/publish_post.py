@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """생성된 글(output/*.json)을 네이버 블로그 글쓰기 화면에 입력하고 발행한다.
 
-  python3 publish_post.py output/남자보정속옷_20260916_agent.json            # 입력만 하고 발행 전 멈춤(검토용)
-  python3 publish_post.py output/남자보정속옷_20260916_agent.json --publish  # 발행까지
+  python3 publish_post.py samples/남자보정속옷_뉴슬림엑스.md            # 입력만 하고 발행 전 멈춤(검토용)
+  python3 publish_post.py samples/남자보정속옷_뉴슬림엑스.md --publish  # 발행까지  (.md 또는 output/*.json 모두 가능)
 
 - 첫 실행 시 브라우저 창이 뜨면 네이버에 직접 로그인하세요. 로그인 상태는 .browser_profile/ 에 저장됩니다.
 - 네이버 에디터 마크업은 자주 바뀌므로, 안 되면 SELECTORS 의 셀렉터를 개발자도구로 확인해 고치세요.
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -61,8 +62,26 @@ def main():
     ap.add_argument("--blog-id", help="네이버 블로그 아이디 (생략 시 로그인한 계정의 글쓰기 페이지 사용)")
     ap.add_argument("--publish", action="store_true", help="발행 버튼까지 누름. 없으면 입력 후 대기")
     ap.add_argument("--headless", action="store_true")
+    ap.add_argument("--cookies", default=os.environ.get("NAVER_COOKIES", ""),
+                    help="브라우저에서 복사한 네이버 쿠키 문자열 (NID_AUT=...; NID_SES=...). CI 발행용, 환경변수 NAVER_COOKIES 로도 지정")
+    ap.add_argument("--shot-dir", default="", help="실패/완료 시 스크린샷 저장 폴더")
     args = ap.parse_args()
-    post = json.loads(Path(args.post_json).read_text(encoding="utf-8"))
+    src = Path(args.post_json)
+    if src.suffix.lower() == ".md":
+        lines = src.read_text(encoding="utf-8").splitlines()
+        lines = [l for l in lines]
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        title = lines.pop(0).lstrip("# ").strip() if lines else ""
+        tag_line = ""
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i].strip():
+                if lines[i].strip().startswith("#"):
+                    tag_line = lines.pop(i)
+                break
+        post = {"title": title, "body": "\n".join(lines).strip(), "hashtags": tag_line}
+    else:
+        post = json.loads(src.read_text(encoding="utf-8"))
     title = post.get("title") or post.get("제목") or ""
     body = post.get("body") or post.get("본문") or ""
     tags = (post.get("hashtags") or post.get("해시태그") or "").replace("#", " ").split()
@@ -73,10 +92,31 @@ def main():
     with sync_playwright() as pw:
         ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=args.headless, viewport={"width": 1280, "height": 900})
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        shot_dir = Path(args.shot_dir) if args.shot_dir else None
+        if shot_dir:
+            shot_dir.mkdir(parents=True, exist_ok=True)
+
+        def shot(name):
+            if shot_dir:
+                try:
+                    page.screenshot(path=str(shot_dir / f"{name}.png"), full_page=True)
+                except Exception:  # noqa: BLE001
+                    pass
+
+        if args.cookies:
+            cookies = []
+            for part in args.cookies.split(";"):
+                if "=" in part:
+                    k, v = part.strip().split("=", 1)
+                    cookies.append({"name": k, "value": v, "domain": ".naver.com", "path": "/"})
+            ctx.add_cookies(cookies)
         page.goto(write_url, wait_until="domcontentloaded")
 
-        # 로그인 안 되어 있으면 로그인 페이지로 튕긴다 → 사용자가 직접 로그인할 때까지 대기(최대 5분)
+        # 로그인 안 되어 있으면 로그인 페이지로 튕긴다
         if "nid.naver.com" in page.url:
+            if args.headless or args.cookies:
+                shot("login_required")
+                sys.exit("로그인이 필요합니다. 쿠키가 만료됐거나 새 기기 인증이 걸렸습니다. 로컬에서 창을 띄워 로그인하세요.")
             print("브라우저에서 네이버 로그인을 해 주세요 (5분 대기)...", file=sys.stderr)
             page.wait_for_url(lambda u: "nid.naver.com" not in u, timeout=300_000)
             page.goto(write_url, wait_until="domcontentloaded")
@@ -90,6 +130,7 @@ def main():
         try:
             frame.wait_for_selector(SELECTORS["title"], timeout=30_000)
         except PWTimeout:
+            shot("editor_not_found")
             sys.exit("에디터 제목 영역을 찾지 못했습니다. SELECTORS['title'] 을 확인하세요.")
 
         # 이어쓰기 팝업이 뜨면 '취소'
@@ -104,7 +145,12 @@ def main():
         frame.locator(SELECTORS["body"]).first.click()
         type_paragraphs(page, strip_markdown(body))
         print(f"입력 완료: 제목 {len(title)}자, 본문 {len(body)}자", file=sys.stderr)
+        shot("filled")
 
+        if not args.publish and args.headless:
+            print("헤드리스 점검 모드: 입력까지만 확인하고 종료합니다 (--publish 없음).", file=sys.stderr)
+            ctx.close()
+            return
         if not args.publish:
             print("발행 전 상태로 멈췄습니다. 검토 후 브라우저에서 직접 발행하거나 --publish 로 다시 실행하세요. (Ctrl+C 로 종료)", file=sys.stderr)
             try:
@@ -120,9 +166,17 @@ def main():
             for t in tags[:10]:
                 page.keyboard.insert_text(t)
                 page.keyboard.press("Enter")
+        shot("publish_dialog")
         frame.locator(SELECTORS["publish_confirm"]).click()
-        page.wait_for_url(re.compile(r"blog\.naver\.com/.+/\d+"), timeout=60_000)
+        try:
+            page.wait_for_url(re.compile(r"blog\.naver\.com/.+/\d+"), timeout=60_000)
+        except PWTimeout:
+            shot("publish_failed")
+            sys.exit(f"발행 확인 실패. 현재 URL: {page.url}")
+        shot("published")
         print(f"발행 완료: {page.url}")
+        if shot_dir:
+            (shot_dir / "published_url.txt").write_text(page.url, encoding="utf-8")
         ctx.close()
 
 

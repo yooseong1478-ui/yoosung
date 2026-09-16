@@ -1,0 +1,38 @@
+name: publish-naver-post
+on:
+  workflow_dispatch:
+    inputs:
+      post_file:
+        description: "발행할 글 파일 (naver_blog_bot 기준 경로)"
+        default: "samples/남자보정속옷_뉴슬림엑스.md"
+      publish:
+        description: "true 면 실제 발행, false 면 입력까지만 점검"
+        type: boolean
+        default: false
+      blog_id:
+        description: "네이버 블로그 아이디 (비우면 로그인 계정 기본 블로그)"
+        default: ""
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install playwright && python3 -m playwright install --with-deps chromium
+      - name: Fill (and publish) the post on Naver Blog
+        working-directory: naver_blog_bot
+        env:
+          NAVER_COOKIES: ${{ secrets.NAVER_COOKIES }}
+        run: |
+          if [ -z "$NAVER_COOKIES" ]; then echo "NAVER_COOKIES 시크릿이 없습니다. README 의 발행 안내를 보세요."; exit 1; fi
+          ARGS="--headless --shot-dir shots"
+          [ "${{ inputs.publish }}" = "true" ] && ARGS="$ARGS --publish"
+          [ -n "${{ inputs.blog_id }}" ] && ARGS="$ARGS --blog-id ${{ inputs.blog_id }}"
+          python3 publish_post.py "${{ inputs.post_file }}" $ARGS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: naver-publish-shots
+          path: naver_blog_bot/shots
+          if-no-files-found: ignore
