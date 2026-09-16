@@ -1,0 +1,101 @@
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20180710/new1_1_shop1_100559.jpg -> OCR 91자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20180710/BKENI_0174_shop1_100606.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20180710/image_4061691381526454750779_shop1_100650.jpg -> OCR 330자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20180710/new2_4_shop1_100650.jpg -> OCR 404자
+[이미지] 실패 https://link.webhard.co.kr/img/HDB_IDBKENI_FD20100719101016440181742: HTTPSConnectionPool(host='link.webhard.co.kr', port=443): Max retries exceeded with url: /img/HDB_IDBKENI_FD20100719101016440181742 (Caused by NameResolutionError("HTTPSConnection(host='link.webhard.co.kr', port=443): Failed to resolve 'link.webhard.co.kr' ([Errno -2] Name or service not known)"))
+[제품] 65: info 389자, 이미지 4장
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/30348e85e56bb4e04d25c7caaf2c40fa.jpg -> OCR 156자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/26b3d473025513bc2bc9fd2d0d271202.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/686cb91113da9475a3f5092501fae64b.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/0909b67eaf157fe9913a2a76fa26710d.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/03907f0603410016447c38eb4efd4165.jpg -> OCR 172자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/1c1a7eab603a863f0ce1f7314105cc00.jpg -> OCR 352자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/af6bd0df17a1ff094dfde864b2a7fac9.jpg -> OCR 28자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/1062b26be2ddfe56ef54b5a872c1212b.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/ed4058853b8306f9e841adbdf994345f.jpg -> OCR 284자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/404909a4a3ef762da9a88db80773a5fe.jpg -> OCR 250자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/5ec726243a397c9200566251f3b4b1f8.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/febea1116cc992791bac15b854ac1117.jpg -> OCR 250자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20210726/aa9c143962b5ffa1f0e5ff44689989b1.jpg -> OCR 432자
+[제품] 64: info 404자, 이미지 13장
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/0731447a245e4add49381b7530694b61.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/d05a3af5163f4d6de5b725076835c844.jpg -> OCR 83자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/6591340aa7e366fabb791b03ddfac9b5.jpg -> OCR 287자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/57a9844eb2ef88bff37d62ab4b4f590e.jpg -> OCR 128자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/d0a476afb98c0aa791b24b173951c2d3.jpg -> OCR 211자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/be44a2369508aa613e6183edd57ecd7b.jpg -> OCR 648자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/7198abbac8289873fdb61a019ec2b55b.jpg -> OCR 599자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/b9b1b35d977e99c6fd11e7eeb6231ed7.jpg -> OCR 0자
+[이미지] https://bodyshaper.co.kr/web/upload/NNEditor/20200720/e8768c9e909cc4ed2fab90e8c68f0630.jpg -> OCR 280자
+[제품] 112: info 410자, 이미지 9장
+[게시판 4] 글 31개
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10449&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10449&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10487&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10487&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10486&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10486&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10484&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10484&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10481&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10481&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10482&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10482&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10480&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10480&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10478&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10478&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10479&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10479&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10476&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10476&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10477&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10477&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10465&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10465&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10464&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10464&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10463&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10463&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10455&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10455&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10456&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10456&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10450&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10450&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10451&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10451&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10447&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10447&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10448&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10448&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10444&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10444&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10445&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10445&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10443&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10443&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10442&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10442&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10438&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10438&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10436&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10436&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10437&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10437&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10434&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10434&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10435&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10435&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10394&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10394&board_no=4&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=10393&board_no=4&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=10393&board_no=4&spread_flag=T
+[게시판 4] 본문 확보 31개
+[게시판 6] 글 36개
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=7703&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=7703&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=7109&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=7109&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=9204&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=9204&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=9207&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=9207&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=9203&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=9203&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=9208&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=9208&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8964&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8964&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8965&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8965&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8942&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8942&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8873&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8873&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8743&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8743&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8691&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8691&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=6844&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=6844&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=4958&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=4958&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8671&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8671&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8665&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8665&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8663&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8663&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8661&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8661&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8657&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8657&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8649&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8649&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8645&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8645&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8631&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8631&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8609&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8609&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8607&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8607&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=4622&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=4622&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=4613&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=4613&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8604&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8604&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8600&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8600&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8599&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8599&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8597&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8597&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8594&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8594&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8584&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8584&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8576&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8576&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8571&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8571&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8566&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8566&board_no=6&spread_flag=T
+[글] 실패 https://bodyshaper.co.kr/product/provider/review_read.xml?no=8565&board_no=6&spread_flag=T: 404 Client Error: Not Found for url: https://bodyshaper.co.kr/product/provider/review_read.xml?no=8565&board_no=6&spread_flag=T
+[게시판 6] 본문 확보 13개

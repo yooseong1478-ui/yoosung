@@ -1,0 +1,1329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+
+
+
+<head><script>(function(i, s, o, g, r) {
+    var a = s.createElement(o);
+    var m = s.getElementsByTagName(o)[0];
+    a.async = true;
+    a.src = g;
+    a.onload = function() {
+        if (i[r].init) {
+            i[r].init('https://js-error-tracer-api.cafe24.com', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzcXVlZW0uY2FmZTI0LmNvbSIsImF1ZCI6ImpzLWVycm9yLXRyYWNlci1hcGkuY2FmZTI0LmNvbSIsIm1hbGxfaWQiOiJzcXVlZW0iLCJzaG9wX25vIjoxLCJwYXRoX3JvbGUiOiJCT0FSRF9QUk9EVUNUX0xJU1QiLCJsYW5ndWFnZV9jb2RlIjoia29fS1IiLCJjb3VudHJ5X2NvZGUiOiJLUiIsImlzX3l0cyI6ZmFsc2UsImlzX2NvbnRhaW5lciI6ZmFsc2UsIndvcmtzcGFjZSI6InByb2R1Y3Rpb24ifQ.T-uaAhIIAj6_EhSM6RQPEvkiihmgH14mlqeksuXygQQ', {"errors":{"path":"\/api\/v1\/store","collectWindowErrors":true,"preventDuplicateReports":true,"storageKeyPrefix":"EC_JET.BOARD_PRODUCT_LIST","samplingEnabled":true,"samplingRate":0.5},"vitals":{"path":"\/api\/v1\/vitals","samplingEnabled":true,"samplingRate":0.3},"resources":{"path":"\/api\/v1\/resources","samplingEnabled":true,"samplingRate":0.5,"durationThreshold":3000}});
+        }
+    };
+    m.parentNode.insertBefore(a, m);
+}(window, document, 'script', '//assets.poxo.com/jet/jet.js', 'EC_JET'));</script>
+<script type="text/javascript">window.CAFE24 = window.CAFE24 || {};CAFE24.ROUTE = {"is_mobile":false,"is_need_route":false,"language_code":"ZZ","path":{"origin":"\/board\/product\/list.html","result":"\/board\/product\/list.html","prefix":""},"shop_no":0,"skin_code":"default","support_language_list":{"ar":"ar_EG","ar-EG":"ar_EG","de":"de_DE","de-DE":"de_DE","en":"en_US","en-IN":"en_IN","en-PH":"en_PH","en-US":"en_US","es":"es_ES","es-ES":"es_ES","hi":"hi_IN","hi-IN":"hi_IN","id":"id_ID","id-ID":"id_ID","it":"it_IT","it-IT":"it_IT","ja":"ja_JP","ja-JP":"ja_JP","ko":"ko_KR","ko-KR":"ko_KR","ms":"ms_MY","ms-MY":"ms_MY","pt":"pt_PT","pt-PT":"pt_PT","ru":"ru_RU","ru-RU":"ru_RU","th":"th_TH","th-TH":"th_TH","tr":"tr_TR","tr-TR":"tr_TR","vi":"vi_VN","vi-VN":"vi_VN","zh":"zh_CN","zh-CN":"zh_CN","zh-HK":"zh_HK","zh-MO":"zh_MO","zh-SG":"zh_SG","zh-TW":"zh_TW"}};</script><script type="text/javascript">if (typeof EC_ROUTE === "undefined") {
+    /**
+     * 프론트용 라우트 플러그인
+     * @type {{bInit: boolean, init: EC_ROUTE.init}}
+     * CAFE24.ROUTE 참조
+     */
+    var EC_ROUTE = {
+        EC_DOMAIN_PATH_INFO: 'EC_DOMAIN_PATH_INFO',
+        bInit: false,
+        aFromList: [],
+        aToList: [],
+        aCleanFilter: null,
+        init: function () {
+            if (this.bInit || typeof CAFE24.ROUTE === 'undefined') {
+                return;
+            }
+            this.bInit = true;
+            this.aCleanFilter = [
+                /^shop[1-9][0-9]*$/,
+                /^(m|p)$/,
+                new RegExp('^(' + Object.keys(CAFE24.ROUTE.support_language_list).join('|')  + ')$'),
+                /^skin-(base|skin[1-9][0-9]*|mobile[0-9]*)$/,
+            ];
+        },
+        isNeedRoute: function ()
+        {
+            return CAFE24.ROUTE.is_need_route;
+        },
+        /**
+         *
+         * @param iShopNo
+         * @param bMobile
+         * @param sFrontLanguage
+         * @param sSkinCode
+         * @returns {*|string}
+         */
+        getUrlDomain: function (iShopNo, bMobile, sFrontLanguage, sSkinCode)
+        {
+            var oRouteConfig = {};
+            if (typeof iShopNo == 'undefined') {
+                oRouteConfig.shop_no = CAFE24.SDE_SHOP_NUM;
+            } else {
+                oRouteConfig.shop_no = iShopNo;
+            }
+            if (typeof bMobile == 'undefined') {
+                oRouteConfig.is_mobile = false;
+            } else {
+                oRouteConfig.is_mobile = bMobile;
+            }
+            if (typeof sFrontLanguage == 'undefined') {
+                oRouteConfig.language_code = '';
+            }else {
+                oRouteConfig.language_code = sFrontLanguage; // 내부에서 로직으로 동작할땐 언어_지역 형태의 로케일 형태를 따른다.
+            }
+            if (typeof sSkinCode == 'undefined') {
+                oRouteConfig.skin_code = '';
+            }else {
+                oRouteConfig.skin_code = sSkinCode;
+            }
+
+            var sDomain = '';
+            if (oRouteConfig.shop_no != CAFE24.SDE_SHOP_NUM) {
+                // 접근된 다른 멀티샵 도메인 정보는 primary domain 를 조회해야함으로 ajax 를 통해 정보를 얻는다.
+                sDomain = this._getUrlDomainMultishop(oRouteConfig);
+            } else {
+                // 샵이 동일할 경우에는 접근된 domain 에 path 정보만 정리하여 반환함.
+                sDomain = this._getUrlDomain(oRouteConfig);
+            }
+            return sDomain;
+        },
+        _getUrlDomainMultishop: function (oRouteConfig)
+        {
+            var sDomain = '';
+            EC$.ajax({
+                type: 'GET',
+                url: '/exec/front/Shop/Domain',
+                data: {
+                    '_shop_no' : oRouteConfig.shop_no,
+                    'is_mobile' : oRouteConfig.is_mobile,
+                    'language_code' : oRouteConfig.language_code,
+                    'skin_code' : oRouteConfig.skin_code,
+                },
+                async: false,
+                dataType: 'json',
+                cache: true,
+                success: function(oResult) {
+                    switch (oResult.code) {
+                        case '0000' :
+                            sDomain = oResult.data;
+                            break;
+                        default :
+                            break;
+                    }
+                    return false;
+                }
+            });
+            return sDomain;
+        },
+        _getUrlDomain: function (oRouteConfig)
+        {
+            oRouteConfig.domain = this._getCreateHost(oRouteConfig);
+            return location.protocol + '//' + oRouteConfig.domain + this._getCreateUri(oRouteConfig);
+        },
+        _getCreateHost : function (oRouteConfig)
+        {
+            var sHost = location.host;
+            var aHost = sHost.split('.');
+            if (this.isBaseDomain(sHost)) {
+                if (aHost.length > 3) {
+                    aHost[0] = '';
+                }
+            } else if (oRouteConfig.is_mobile) {
+                if (this.isMobileDomain()) {
+                    oRouteConfig.is_mobile = false;
+                }
+            }
+            return aHost.filter(Boolean).join('.');
+        },
+        _getCreateUri: function (oRouteInfo)
+        {
+            var aUrl = [];
+            if (this.isBaseDomain() && oRouteInfo.shop_no > 1) {
+                aUrl.push('shop' + oRouteInfo.shop_no);
+            }
+            if (oRouteInfo.is_mobile) {
+                aUrl.push('m');
+            }
+            if (oRouteInfo.language_code != 'ZZ' && oRouteInfo.language_code != '') {
+                var iIndex = Object.values(CAFE24.ROUTE.support_language_list).indexOf(oRouteInfo.language_code);
+                if (iIndex !== -1) {
+                    aUrl.push(Object.keys(CAFE24.ROUTE.support_language_list)[iIndex]);
+                }
+            }
+            if (this.isBaseDomain() && oRouteInfo.skin_code != 'default' && oRouteInfo.skin_code != '') {
+                aUrl.push('skin-' + oRouteInfo.skin_code);
+            }
+            var sUrl= '/';
+            if (aUrl.length > 0) {
+                sUrl= '/' + aUrl.join('/');
+                sUrl = this.rtrim(sUrl, '/');
+            }
+            return sUrl;
+        },
+        /**
+         * en, en-US => en_US
+         */
+        convertValidLanguageCode: function (sUrlLanguageCode)
+        {
+            if (typeof CAFE24.ROUTE.support_language_list[sUrlLanguageCode] != 'undefined') {
+                return CAFE24.ROUTE.support_language_list[sUrlLanguageCode];
+            }
+            return false;
+        },
+        isMobileDomain: function (sHost)
+        {
+            if (typeof sHost == 'undefined') {
+                sHost = location.host;
+            }
+            var aMatched = sHost.match(/^(m|mobile|skin\-mobile|skin\-mobile[0-9]+[\-]{2}shop[0-9]+|skin\-mobile[0-9]+|mobile[\-]{2}shop[0-9]+)\./i);
+            return aMatched != null;
+        },
+        isBaseDomain: function (sHost)
+        {
+            if (typeof sHost == 'undefined') {
+                sHost = location.host;
+            }
+            return sHost.indexOf(CAFE24.GLOBAL_INFO.getRootDomain()) !== -1;
+        },
+        removePrefixUrl: function (sUrl)
+        {
+            if (this.isNeedRoute()) {
+                sUrl = sUrl.replace(this.getPrefixUrl('/'), '/'); // 자동으로  prefix 붙은 영역을 제거해준다.
+            }
+            return sUrl;
+        },
+        getPrefixUrl: function (sUrl)
+        {
+            if (this.isNeedRoute() === false) {
+                return sUrl;
+            }
+            if (sUrl.indexOf('/') !== 0) {
+                return sUrl;
+            }
+            if (sUrl.match(/^\/{2,}/) !== null) {
+                return sUrl;
+            }
+
+            var iCachedPosition = this.aFromList.indexOf(sUrl);
+            if (iCachedPosition > -1) {
+                return this.aToList[iCachedPosition];
+            }
+
+            var bTailSlash = (sCleanUrl !== '/' && sUrl.substr(-1) === '/');
+            var sCleanUrl = this.getCleanUrl(sUrl);
+            var aPrefixPart = CAFE24.ROUTE.path.prefix.split('/');
+            var aUrlPart = sCleanUrl.split('/');
+            var bMatched = true;
+            var sReturnUrl = sCleanUrl;
+            if (aUrlPart.length < aPrefixPart.length) {
+                bMatched = false;
+            } else {
+                for (var i = 0; i < aPrefixPart.length ; i++) {
+                    if (aPrefixPart[i] != aUrlPart[i]) {
+                        bMatched = false;
+                        break;
+                    }
+                }
+            }
+            if (bMatched === false) {
+                if (sCleanUrl == '/') {
+                    sReturnUrl = CAFE24.ROUTE.path.prefix;
+                } else {
+                    sReturnUrl = CAFE24.ROUTE.path.prefix +  sCleanUrl;
+                }
+                sReturnUrl = bTailSlash ? sReturnUrl : this.rtrim(sReturnUrl, '/')
+                this.aFromList.push(sUrl);
+                this.aToList.push(sReturnUrl);
+            }
+            return sReturnUrl;
+        },
+        /**
+         * document.location.pathname 이 필요할 경우 사용한다.
+         * @returns {*}
+         */
+        getPathName: function()
+        {
+            if (typeof CAFE24.ROUTE.path.result == 'undefined') {
+                return document.location.pathname;
+            }
+            return CAFE24.ROUTE.path.result;
+        },
+        rtrim: function (str, chr)
+        {
+            var rgxtrim = (!chr) ? new RegExp('\\s+$') : new RegExp(chr+'+$');
+            return str.replace(rgxtrim, '');
+        },
+        getShopNo: function ()
+        {
+            return CAFE24.ROUTE.shop_no;
+        },
+        getSkinCode: function ()
+        {
+            return CAFE24.ROUTE.skin_code;
+        },
+        getLanguageCode: function ()
+        {
+            return CAFE24.ROUTE.language_code;
+        },
+        getMobile: function ()
+        {
+            return CAFE24.ROUTE.is_mobile;
+        },
+        getIsMobile: function ()
+        {
+            return CAFE24.ROUTE.is_mobile || CAFE24.ROUTE.skin_code.match(/^mobile[0-9]*$/);
+        },
+        getCleanUrl: function (sUrl)
+        {
+            if (sUrl === '/') {
+                return sUrl;
+            }
+
+            var aUrl = sUrl.split('/');
+            aUrl.shift();
+
+            if (aUrl.length < 1) {
+                return sUrl;
+            }
+
+            // 현재 4 depth 까지 미리보기 기능이 구현되어있음
+            var iPos = 0;
+            var bFind = false;
+            for (var i = 0; i < aUrl.length ; i++) {
+                bFind = false;
+                for (var iSub = iPos, iSubCount = this.aCleanFilter.length; iSub < iSubCount ; iSub++) {
+                    if (aUrl[i].match(this.aCleanFilter[iSub]) !== null) {
+                        bFind = true;
+                        iPos = iSub + 1;
+                        aUrl.splice(i, 1);
+                        i--; // aUrl 을 삭제해 주었으니 검색 조건을 -1 제거하여 초기화 한다. 다음 for i++ 로 증감 조회됨.
+                        break;
+                    }
+                }
+                if (bFind === false) {
+                    break;
+                }
+            }
+            return '/' + aUrl.join('/');
+        },
+        getIsEasyUrl : function ()
+        {
+            return !window.location.pathname.match(/^[\w\/\-\.]+(php|html|htm)$/i);
+        }
+    };
+    EC_ROUTE.init();
+}
+</script>
+<meta name="path_role" content="BOARD_PRODUCT_LIST" />
+<meta name="description" content="무엇이든 물어보세요." />
+<meta name="keywords" content="상품 Q&amp;A입니다" /><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    
+
+    <!--PG크로스브라우징필수내용 시작-->
+    <meta http-equiv="Cache-Control" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <!--PG크로스브라우징필수내용 끝-->
+
+        <!--해당 CSS는 쇼핑몰 전체 페이지에 영향을 줍니다. 삭제와 수정에 주의해주세요.-->
+    
+    
+    
+
+    <!-- 스마트디자인에서는 최신 JQuery가 내장되어있습니다. 추가로 호출하면 충돌이 생길 수 있습니다. -->
+    
+    
+    <script type="text/javascript" src="/ec-js/common.js"></script><!-- 해당 JS는 플래시를 사용하기 위한 스크립트입니다. -->
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/xeicon/2/xeicon.min.css"/>
+<link rel="canonical" href="https://bodyshaper.co.kr/board/상품-qa입니다/6/" />
+<link rel="alternate" href="https://m.bodyshaper.co.kr/board/상품-qa입니다/6/" />
+<meta property="og:url" content="https://bodyshaper.co.kr/board/상품-qa입니다/6/" />
+<meta property="og:title" content="상품 Q&amp;A입니다 - 바디쉐이퍼" />
+<meta property="og:description" content="무엇이든 물어보세요." />
+<meta property="og:site_name" content="바디쉐이퍼" />
+<meta property="og:type" content="article" />
+<script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
+<script type="text/javascript">var CAFE24API = { instance: [], MALL_ID: 'squeem', SHOP_NO: 1, basicAuthKeys: {}, setBasicAuthKey: function (clientId, basicAuthKey) { if (typeof basicAuthKey !== 'string') { return; } if (clientId) { CAFE24API.basicAuthKeys[clientId] = basicAuthKey; } else { CAFE24API.basicAuthKeys['default'] = basicAuthKey; } }, init: function (appInfo) { if (typeof appInfo == 'object') { if (appInfo.hasOwnProperty('client_id')) { var appKey = appInfo.client_id; } } else { var appKey = appInfo; } if (appKey) { if (!this.instance[appKey]) { CAFE24API.clientId = appKey; if (appInfo.hasOwnProperty('version')) { CAFE24API.version = appInfo.version; } else { if (CAFE24API.hasOwnProperty('version')) { delete CAFE24API.version; } } var copyObject = CAFE24API.constructor(); for (var attr in CAFE24API) { if (CAFE24API.hasOwnProperty(attr)) { copyObject[attr] = CAFE24API[attr]; } } this.instance[appKey] = copyObject; } return this.instance[appKey]; } }, initializeXhr: function () { try { return new XMLHttpRequest(); } catch (error) { return new window.ActiveXObject('Microsoft.XMLHTTP'); } }, fullPath: function (url) { return 'https://squeem.cafe24api.com' + url; }, getLoginProvider: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'login': CAPP_ASYNC_METHODS.AppCommon.getLoginProvider() }); }, getCustomerProvider: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'login': CAPP_ASYNC_METHODS.AppCommon.getCustomerProvider() }); }, getMemberID: function (callback) { if (!CAPP_ASYNC_METHODS.IS_LOGIN) { callback(null); } else { callback(CAPP_ASYNC_METHODS.AppCommon.getMemberID()); } }, getEncryptedMemberId: function (client_id, callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, CAPP_ASYNC_METHODS.AppCommon.getEncryptedMemberId(client_id)); }, getMemberInfo: function (callback) { callback({ 'id': CAPP_ASYNC_METHODS.AppCommon.getMemberInfo() }); }, getCustomerIDInfo: function (callback) { if (!CAFE24API.__scopeErr(callback, 'application')) { return; } callback(null, { 'id': CAPP_ASYNC_METHODS.AppCommon.getCustomerIDInfo() }); }, getCustomerInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'customer': CAPP_ASYNC_METHODS.AppCommon.getCustomerInfo() }); }, getDefaultShippingAddress: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'shipping_address': CAPP_ASYNC_METHODS.AppCommon.getDefaultShippingAddress() }); }, getMileageInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'mileage': CAPP_ASYNC_METHODS.AppCommon.getMileageInfo() }); }, getPointInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'point': CAPP_ASYNC_METHODS.AppCommon.getPointInfo() }); }, getDepositInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'deposit': CAPP_ASYNC_METHODS.AppCommon.getDepositInfo() }); }, getCreditInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'customer')) { return; } callback(null, { 'credit': CAPP_ASYNC_METHODS.AppCommon.getCreditInfo() }); }, getCartList: function (callback) { if (!CAFE24API.__scopeErr(callback, 'personal')) { return; } CAPP_ASYNC_METHODS.AppCommon.getCartList().then(function (data) { callback(null, { 'carts': data }); }); }, getCartInfo: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'personal')) { return; } callback(null, { 'cart': CAPP_ASYNC_METHODS.AppCommon.getCartInfo() }); }, getCartItemList: function (callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } callback(null, { 'items': CAPP_ASYNC_METHODS.AppCommon.getCartItemList() }); }, getCartCount: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'personal')) { return; } callback(null, CAPP_ASYNC_METHODS.AppCommon.getCartCount()); }, getCouponCount: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'promotion')) { return; } callback(null, CAPP_ASYNC_METHODS.AppCommon.getCouponCount()); }, getWishCount: function (callback) { if (!CAFE24API.__chkValidSessionScope(callback, 'personal')) { return; } callback(null, CAPP_ASYNC_METHODS.AppCommon.getWishCount()); }, getShopInfo: function (callback) { if (!CAFE24API.__scopeErr(callback, 'store')) { return; } callback(null, { 'shop': CAPP_ASYNC_METHODS.AppCommon.getShopInfo() }); }, addCurrentProductToCart: function (mall_id, time, app_key, member_id, hmac, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.addCurrentProductToCart(mall_id, time, app_key, member_id, hmac).then(function (data) { callback(null, { 'cart': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error('422'), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, precreateOrder: function (mall_id, time, app_key, member_id, hmac, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.precreateOrder(mall_id, time, app_key, member_id, hmac).then(function (data) { callback(null, { 'order': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error('422'), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, calculatePayment: function (mall_id, request_time, app_key, member_id, request_data_json, hmac, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.calculatePayment(mall_id, request_time, app_key, member_id, request_data_json, hmac).then(function (data) { callback(null, { 'expected_payment': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error('422'), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, precreateOrderV2: function (mall_id, time, app_key, member_id, request_data_json, hmac, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.precreateOrderV2(mall_id, time, app_key, member_id, request_data_json, hmac).then(function (data) { callback(null, { 'order': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error('422'), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, getOrderItemList: function (start_date, end_date, order_status, page, count, order_id, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.getOrderItemList(start_date, end_date, order_status, page, count, order_id).then(function (data) { callback(null, { 'items': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, getOrderDetailInfo: function (shop_no, order_id, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.getOrderDetailInfo(shop_no, order_id).then(function (data) { callback(null, { 'orders': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, getClaimableItemList: function (order_id, customer_service_type, callback) { if (!CAFE24API.__scopeErr(callback, 'order')) { return; } CAPP_ASYNC_METHODS.AppCommon.getClaimableItemList(order_id, customer_service_type).then(function (data) { callback(null, { 'items': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, emptyCart: function (basket_shipping_type, callback) { if (!CAFE24API.__scopeErr(callback, 'personal')) { return; } CAPP_ASYNC_METHODS.AppCommon.emptyCart(basket_shipping_type).then(function (data) { callback(null, { 'result': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, deleteCartItems: function (basket_shipping_type, product_list, callback) { if (!CAFE24API.__scopeErr(callback, 'personal')) { return; } CAPP_ASYNC_METHODS.AppCommon.deleteCartItems(basket_shipping_type, product_list).then(function (data) { callback(null, { 'result': data }); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }); }, addCart: function (basket_type, prepaid_shipping_fee, product_list, callback) { if (!CAFE24API.__scopeErr(callback, 'personal')) { return; } CAPP_ASYNC_METHODS.AppCommon.addCart(basket_type, prepaid_shipping_fee, product_list).then(function (data) { callback(null, data); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }) }, addBundleProductsCart: function (basket_type, prepaid_shipping_fee, product_list, callback) { if (!CAFE24API.__scopeErr(callback, 'personal')) { return; } CAPP_ASYNC_METHODS.AppCommon.addBundleProductsCart(basket_type, prepaid_shipping_fee, product_list).then(function (data) { callback(null, data); }).catch(function (data) { if (data) { callback(new Error('422'), { 'error': { code: data.code, message: data.message } }); } else { callback(new Error(422), { 'error': { code: 422, message: 'This sdk is not available on the current page' } }); } }) }, get: function (url, callback) { return CAFE24API.complete('GET', url, this, null, callback); }, post: function (url, params, callback) { return CAFE24API.complete('POST', url, this, params, callback); }, put: function (url, params, callback) { return CAFE24API.complete('PUT', url, this, params, callback); }, delete: function (url, callback) { return CAFE24API.complete('DELETE', url, this, null, callback); }, complete: function (method, url, obj, params, callback) { var xhr = CAFE24API.sendXhr(method, url, obj, params, callback); xhr.onreadystatechange = function () { if (xhr.readyState === XMLHttpRequest.DONE) { if (xhr.status >= 200 && xhr.status <= 208) { callback(null, JSON.parse(xhr.responseText)); } else { callback(new Error(xhr.status), JSON.parse(xhr.responseText)); } } }; }, sendXhr: function (method, url, obj, params, callback) { if (method !== 'POST') { var url = obj.fullPath(url); } var xhr = obj.initializeXhr(); var queryVars = {}; if (obj.clientId) queryVars['cafe24_app_key'] = obj.clientId; if (obj.version) queryVars['cafe24_api_version'] = obj.version; var basicAuthKey = CAFE24API.basicAuthKeys[obj.clientId] || CAFE24API.basicAuthKeys['default']; if (basicAuthKey && basicAuthKey.length > 0) { queryVars['authorization'] = 'Basic ' + basicAuthKey; } if (params === null) { var seperator = url.indexOf('?') == -1 ? '?' : '&'; var queryString = []; for (var key in queryVars) { queryString.push(key + '=' + encodeURIComponent(queryVars[key])); } if (queryString.length > 0) { url = url + seperator + queryString.join('&'); } } xhr.open(method, url, true); if (typeof params == 'object' && params !== null) { xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=utf-8'); for (var key in queryVars) { params[key] = queryVars[key]; } params = 'formData=' + JSON.stringify(params); } xhr.send(params || null); return xhr; }, __sessionErr: function (callback) { callback(new Error(403), { 'error': { code: 403, message: 'Failed to get session. Only available when log in.' } }); }, __scopeErr: function (callback, scope) { if (typeof CAFE24.APPSCRIPT_SDK_DATA != "undefined" && jQuery.inArray(scope, CAFE24.APPSCRIPT_SDK_DATA) > -1) { return true; } callback(new Error(403), { 'error': { code: 403, message: 'You do not have the necessary authority(scope) to use the SDK.' } }); }, __chkValidSessionScope: function (callback, scope) { if (!CAPP_ASYNC_METHODS.IS_LOGIN) { CAFE24API.__sessionErr(callback); return false; } if (!CAFE24API.__scopeErr(callback, scope)) { return false; } return true; } }; </script>
+<script type="text/javascript">
+window.CAFE24 = window.CAFE24 || {};
+CAFE24.MANIFEST_CACHE_REVISION = '2609161505';
+CAFE24.getDeprecatedNamespace = function(sDeprecatedNamespace, sSupersededNamespace) {
+var sNamespace = sSupersededNamespace 
+? sSupersededNamespace 
+: sDeprecatedNamespace.replace(/^EC_/, '');
+return CAFE24[sNamespace];
+}
+CAFE24.FRONT_LANGUAGE_CODE = "ko_KR";
+CAFE24.MOBILE = false;
+CAFE24.MOBILE_DEVICE = false;
+CAFE24.MOBILE_USE = true;
+var EC_MOBILE = CAFE24.MOBILE;
+var EC_MOBILE_DEVICE = CAFE24.MOBILE_DEVICE;
+var EC_MOBILE_USE = CAFE24.MOBILE_USE;
+CAFE24.SKIN_CODE = "skin12";
+CAFE24.FRONT_EXTERNAL_SCRIPT_VARIABLE_DATA = {"common_member_id_crypt":""};
+var EC_FRONT_EXTERNAL_SCRIPT_VARIABLE_DATA = CAFE24.getDeprecatedNamespace('EC_FRONT_EXTERNAL_SCRIPT_VARIABLE_DATA');
+CAFE24.SDE_SHOP_NUM = 1;CAFE24.SHOP = {getLanguage : function() { return "ko_KR"; },getSkinLanguageCode : function() { return "ko_KR"; },getCurrency : function() { return "KRW"; },getFlagCode : function() { return "KR"; },getTimezone: function() { return "Asia/Seoul" },getDateFormat: function() { return "Y-m-d" },isMultiShop : function() { return false; },isDefaultShop : function() { return true; },isDefaultLanguageShop : function(sLanguageCode) { return SHOP.isDefaultShop() && SHOP.isLanguageShop(sLanguageCode); },isKR : function() { return true; },isUS : function() { return false; },isJP : function() { return false; },isCN : function() { return false; },isTW : function() { return false; },isES : function() { return false; },isPT : function() { return false; },isVN : function() { return false; },isPH : function() { return false; },getCountryAndLangMap : function() { return {
+"KR": "ko_KR",
+"US": "en_US",
+"JP": "ja_JP",
+"CN": "zh_CN",
+"TW": "zh_TW",
+"VN": "vi_VN",
+"PH": "en_PH"
+}},isLanguageShop : function(sLanguageCode) { return sLanguageCode === "ko_KR"; },getDefaultShopNo : function() { return 1; },getProductVer : function() { return 2; },isSDE : function() { return true; },isMode : function() {return false; },getModeName : function() {return false; },isMobileAdmin : function() {return false; },isNewProMode : function() {return true; },isExperienceMall : function() { return false; },isDcollection : function() {return false; },isYoutubeShops : function() {return false; },getYtShopsShopNo : function() {return 0; },isFrontDesignChangeRequired : function() {return false;},isG2G : function() {return false; },isGlobale : function() {return false; },getAdminID : function() {return ''},getMallID : function() {return 'squeem'},getCurrencyFormat : function(sPriceTxt, bIsNumberFormat) { 
+sPriceTxt = String(sPriceTxt);
+var aCurrencySymbol = ["","\uc6d0",false];
+if (typeof CAFE24.SHOP_PRICE !== 'undefined' && isNaN(sPriceTxt.replace(/[,]/gi, '')) === false && bIsNumberFormat === true) {
+// bIsNumberFormat 사용하려면 Ui(':libUipackCurrency')->plugin('Currency') 화폐 라이브러리 추가 필요
+sPriceTxt = CAFE24.SHOP_PRICE.toShopPrice(sPriceTxt.replace(/[,]/gi, ''), true, CAFE24.SDE_SHOP_NUM);
+}
+try {
+var sPlusMinusSign = (sPriceTxt.toString()).substr(0, 1);
+if (sPlusMinusSign === '-' || sPlusMinusSign === '+') {
+sPriceTxt = (sPriceTxt.toString()).substr(1);
+return sPlusMinusSign + aCurrencySymbol[0] + sPriceTxt + aCurrencySymbol[1];
+} else {
+return aCurrencySymbol[0] + sPriceTxt + aCurrencySymbol[1];
+}
+} catch (e) {
+return aCurrencySymbol[0] + sPriceTxt + aCurrencySymbol[1];
+}
+}};CAFE24.CURRENCY_INFO = {getOriginReferenceCurrency : function() {return 'USD'},getCurrencyList : function(sCurrencyCode) { var aCurrencyList = {"AED":{"currency_symbol":"&#1601;&#1604;&#1587;","decimal_place":2,"round_method_type":"R"},"AMD":{"currency_symbol":"\u058f","decimal_place":2,"round_method_type":"R"},"AOA":{"currency_symbol":"Kz","decimal_place":2,"round_method_type":"R"},"AUD":{"currency_symbol":"A$","decimal_place":2,"round_method_type":"R"},"BDT":{"currency_symbol":"&#2547;","decimal_place":2,"round_method_type":"R"},"BHD":{"currency_symbol":".&#1583;.&#1576;","decimal_place":3,"round_method_type":"R"},"BRL":{"currency_symbol":"R$","decimal_place":2,"round_method_type":"R"},"CAD":{"currency_symbol":"C$","decimal_place":2,"round_method_type":"R"},"CHF":{"currency_symbol":"Fr","decimal_place":2,"round_method_type":"R"},"CNY":{"currency_symbol":"&yen;","decimal_place":2,"round_method_type":"R"},"CRC":{"currency_symbol":"\u20a1","decimal_place":2,"round_method_type":"R"},"CVE":{"currency_symbol":"$","decimal_place":2,"round_method_type":"R"},"CZK":{"currency_symbol":"K&#269;","decimal_place":2,"round_method_type":"R"},"DJF":{"currency_symbol":"Fdj","decimal_place":0,"round_method_type":"F"},"DKK":{"currency_symbol":"kr","decimal_place":2,"round_method_type":"R"},"DZD":{"currency_symbol":"\u062f.\u062c","decimal_place":2,"round_method_type":"R"},"ETB":{"currency_symbol":"Br","decimal_place":2,"round_method_type":"R"},"EUR":{"currency_symbol":"\u20ac","decimal_place":2,"round_method_type":"R"},"GBP":{"currency_symbol":"&pound;","decimal_place":2,"round_method_type":"R"},"GEL":{"currency_symbol":"\u20be","decimal_place":2,"round_method_type":"R"},"GHS":{"currency_symbol":"GH\u20b5","decimal_place":2,"round_method_type":"R"},"GMD":{"currency_symbol":"D","decimal_place":2,"round_method_type":"R"},"GNF":{"currency_symbol":"FG","decimal_place":0,"round_method_type":"F"},"HKD":{"currency_symbol":"HK$","decimal_place":2,"round_method_type":"R"},"HUF":{"currency_symbol":"Ft","decimal_place":2,"round_method_type":"R"},"IDR":{"currency_symbol":"Rp","decimal_place":0,"round_method_type":"F"},"ILS":{"currency_symbol":"&#8362;","decimal_place":2,"round_method_type":"R"},"INR":{"currency_symbol":"&#8377;","decimal_place":2,"round_method_type":"R"},"JOD":{"currency_symbol":" &#1583;&#1610;&#1606;&#1575;&#1585;","decimal_place":3,"round_method_type":"R"},"JPY":{"currency_symbol":"&yen;","decimal_place":0,"round_method_type":"F"},"KES":{"currency_symbol":"KSh","decimal_place":2,"round_method_type":"R"},"KMF":{"currency_symbol":"CF","decimal_place":0,"round_method_type":"F"},"KWD":{"currency_symbol":"&#1583;&#1610;&#1606;&#1575;&#1585;","decimal_place":3,"round_method_type":"R"},"MAD":{"currency_symbol":"\u062f.\u0645.","decimal_place":2,"round_method_type":"R"},"MDL":{"currency_symbol":"L","decimal_place":2,"round_method_type":"R"},"MOP":{"currency_symbol":"MOP$","decimal_place":2,"round_method_type":"R"},"MVR":{"currency_symbol":"Rf","decimal_place":2,"round_method_type":"R"},"MWK":{"currency_symbol":"MK","decimal_place":2,"round_method_type":"R"},"MXN":{"currency_symbol":"Mex$","decimal_place":2,"round_method_type":"R"},"MYR":{"currency_symbol":"RM","decimal_place":2,"round_method_type":"R"},"NOK":{"currency_symbol":"kr","decimal_place":2,"round_method_type":"R"},"NZD":{"currency_symbol":"NZ$","decimal_place":2,"round_method_type":"R"},"PGK":{"currency_symbol":"K","decimal_place":2,"round_method_type":"R"},"PHP":{"currency_symbol":"&#8369;","decimal_place":2,"round_method_type":"R"},"PKR":{"currency_symbol":"&#8360;","decimal_place":2,"round_method_type":"R"},"PLN":{"currency_symbol":"z\u0142","decimal_place":2,"round_method_type":"R"},"RUB":{"currency_symbol":"\u0440\u0443\u0431","decimal_place":2,"round_method_type":"R"},"RWF":{"currency_symbol":"RF","decimal_place":0,"round_method_type":"F"},"SAR":{"currency_symbol":"&#65020;","decimal_place":2,"round_method_type":"R"},"SEK":{"currency_symbol":"kr","decimal_place":2,"round_method_type":"R"},"SGD":{"currency_symbol":"S$","decimal_place":2,"round_method_type":"R"},"SLL":{"currency_symbol":"Le","decimal_place":2,"round_method_type":"R"},"STN":{"currency_symbol":"Db","decimal_place":2,"round_method_type":"R"},"THB":{"currency_symbol":"&#3647;","decimal_place":2,"round_method_type":"R"},"TND":{"currency_symbol":"\u062f.\u062a","decimal_place":3,"round_method_type":"R"},"TOP":{"currency_symbol":"T$","decimal_place":2,"round_method_type":"R"},"TRY":{"currency_symbol":"TL","decimal_place":2,"round_method_type":"R"},"TWD":{"currency_symbol":"NT$","decimal_place":0,"round_method_type":"F"},"TZS":{"currency_symbol":"TSh","decimal_place":2,"round_method_type":"R"},"UGX":{"currency_symbol":"USh","decimal_place":0,"round_method_type":"F"},"USD":{"currency_symbol":"$","decimal_place":2,"round_method_type":"R"},"VND":{"currency_symbol":"&#8363;","decimal_place":0,"round_method_type":"F"},"VUV":{"currency_symbol":"VT","decimal_place":0,"round_method_type":"F"},"WST":{"currency_symbol":"WS$","decimal_place":2,"round_method_type":"R"},"XAF":{"currency_symbol":"FCFA","decimal_place":0,"round_method_type":"F"},"XOF":{"currency_symbol":"CFA","decimal_place":0,"round_method_type":"F"},"XPF":{"currency_symbol":"\u20a3","decimal_place":0,"round_method_type":"F"},"ZAR":{"currency_symbol":"R","decimal_place":2,"round_method_type":"R"},"ZMW":{"currency_symbol":"ZK","decimal_place":2,"round_method_type":"R"}}; return aCurrencyList[sCurrencyCode] },isUseReferenceCurrency : function() {return false }};CAFE24.COMMON_UTIL = {convertSslForString : function(sString) { return sString.replace(/http:/gi, '');},convertSslForHtml : function(sHtml) { return sHtml.replace(/((?:src|href)\s*=\s*['"])http:(\/\/(?:[a-z0-9\-_\.]+)\/)/ig, '$1$2');},getProtocol : function() { return 'https'; },moveSsl : function() { if (CAFE24.COMMON_UTIL.getProtocol() === 'http') { var oLocation = jQuery(window.location); var sUrl = 'https://' + oLocation.attr('host') + oLocation.attr('pathname') + oLocation.attr('search'); window.location.replace(sUrl); } },setEcCookie : function(sKey, sValue, iExpire) {var exdate = new Date();exdate.setDate(exdate.getDate() + iExpire);var setValue = escape(sValue) + "; domain=." + CAFE24.GLOBAL_INFO.getBaseDomain() + "; path=/;expires=" + exdate.toUTCString();document.cookie = sKey + "=" + setValue;}};CAFE24.SHOP_LIB_INFO = {getBankInfo : function() { 
+var oBankInfo = "";
+$.ajax({
+type: "GET",
+url: "/exec/front/Shop/Bankinfo",
+dataType: "json",
+async: false,
+success: function(oResponse) {
+oBankInfo = oResponse;
+}
+});
+return oBankInfo; }};            var EC_SDE_SHOP_NUM = CAFE24.SDE_SHOP_NUM;
+var SHOP = CAFE24.getDeprecatedNamespace('SHOP');
+var EC_COMMON_UTIL = CAFE24.getDeprecatedNamespace('EC_COMMON_UTIL');
+var EC_SHOP_LIB_INFO = CAFE24.getDeprecatedNamespace('EC_SHOP_LIB_INFO');
+var EC_CURRENCY_INFO = CAFE24.getDeprecatedNamespace('EC_CURRENCY_INFO');
+CAFE24.ROOT_DOMAIN = "cafe24.com";
+CAFE24.API_DOMAIN = "cafe24api.com";
+CAFE24.GLOBAL_INFO = (function() {
+var oData = {"base_domain":"squeem.cafe24.com","root_domain":"cafe24.com","api_domain":"cafe24api.com","is_global":false,"is_global_standard":false,"country_code":"KR","language_code":"ko_KR","admin_language_code":"ko_KR","front_language_code":"ko_KR"};
+return {
+getBaseDomain: function() {
+return oData['base_domain'];
+},
+getRootDomain: function() {
+return oData['root_domain'];
+},
+getApiDomain: function() {
+return oData['api_domain'];
+},
+isGlobal: function() {
+return oData['is_global'];
+},
+isGlobalStandard: function() {
+return oData['is_global_standard'];
+},
+getCountryCode: function() {
+return oData['country_code'];
+},
+getLanguageCode: function() {
+return oData['language_code'];
+},
+getAdminLanguageCode: function() {
+return oData['admin_language_code'];
+},
+getFrontLanguageCode: function() {
+return oData['front_language_code'];
+}
+};
+})();
+var EC_ROOT_DOMAIN = CAFE24.ROOT_DOMAIN;
+var EC_API_DOMAIN = CAFE24.API_DOMAIN;
+var EC_TRANSLATE_LOG_STATUS = CAFE24.TRANSLATE_LOG_STATUS;
+var EC_GLOBAL_INFO = CAFE24.getDeprecatedNamespace('EC_GLOBAL_INFO');
+CAFE24.AVAILABLE_LANGUAGE = ["ko_KR","zh_CN","en_US","zh_TW","es_ES","pt_PT","vi_VN","ja_JP","en_PH"];
+CAFE24.AVAILABLE_LANGUAGE_CODES = {"ko_KR":"KOR","zh_CN":"CHN","en_US":"ENG","zh_TW":"TWN","es_ES":"ESP","pt_PT":"PRT","vi_VN":"VNM","ja_JP":"JPN","en_PH":"PHL"};
+var EC_AVAILABLE_LANGUAGE = CAFE24.AVAILABLE_LANGUAGE;
+var EC_AVAILABLE_LANGUAGE_CODES = CAFE24.AVAILABLE_LANGUAGE_CODES;
+CAFE24.GLOBAL_PRODUCT_LANGUAGE_CODES = {  
+sClearanceCategoryCode: '',
+sManualLink: '//support.cafe24.com/hc/ko/articles/7739013909529',
+sHsCodePopupLink: 'https://www.wcotradetools.org/en/harmonized-system',
+aCustomRegex: '"PHL" : "^[0-9]{8}[A-Z]?$"',
+sCountryCodeData: 'kor',
+sEnglishExampleURlForGlobal: '',
+aReverseAddressCountryCode: ["VNM","PHL"],
+aSizeGuideCountryAlign: '["US","UK","EU","KR","JP","CN"]',
+aIsSupportTran: ["ja_JP","zh_CN","zh_TW","en_US","vi_VN","en_PH","pt_PT","es_ES"]
+};
+var EC_GLOBAL_PRODUCT_LANGUAGE_CODES = CAFE24.getDeprecatedNamespace('EC_GLOBAL_PRODUCT_LANGUAGE_CODES');
+CAFE24.GLOBAL_ORDER_LANGUAGE_CODES = {
+aModifyOrderLanguage: {"KR":"ko_KR","JP":"ja_JP","CN":"zh_CN","TW":"zh_TW","VN":"vi_VN","PH":"en_PH"},
+aUseIdCardKeyCountry: ["CN","TW"],
+aLanguageWithCountryCode: {"zh_CN":["CN","CHN","HK","HNK"],"ja_JP":["JP","JPN"],"zh_TW":["TW","TWN"],"ko_KR":["KR","KOR"],"vi_VN":["VN","VNM"],"en_PH":["PH","PHL"]},
+aCheckDisplayRequiredIcon: ["ja_JP","zh_CN","zh_TW","en_US","vi_VN","en_PH"],
+aSetReceiverName: {"zh_CN":{"sCountry":"CN","bUseLastName":true},"zh_TW":{"sCountry":"TW","bUseLastName":false},"ja_JP":{"sCountry":"JP","bUseLastName":true}},
+aSetDeferPaymethodLanguage: {"ja_JP":"\uc77c\ubcf8","zh_CN":"\uc911\uad6d"},
+aUseDeferPaymethod: ["ja_JP","zh_CN"],
+aCheckShippingCompanyAndPaymethod: ["ja_JP","zh_CN"],
+aSetDeferPaymethodLanguageForShipping: {"ja_JP":"\u65e5\u672c","zh_CN":"\uc911\uad6d"},
+aCheckStoreByPaymethod: ["ja_JP","zh_CN"],
+aCheckIsEmailRequiredForJs: ["en_US","zh_CN","zh_TW","ja_JP","vi_VN","en_PH"],
+aSetIdCardKeyCountryLanguage: {"CN":"\uc911\uad6d\uc758","TW":"\ub300\ub9cc\uc758"},
+aReverseGlobalAddress: ["en_PH","vi_VN","PHL","VNM","VN","PH"],
+aNoCheckZipCode: ["KOR","JPN"],
+aNotPostCodeAPICountryList: ["en_US","es_ES","pt_PT","en_PH"],
+aEnableSearchExchangeAddr: ["KR","JP","CN","VN","TW","PH"],
+aDuplicatedBaseAddr: ["TW","JP"],
+aReverseAddressCountryCode: ["VN","PH"],
+aCheckZipCode: ["PHL","en_PH","PH"]
+};
+var EC_GLOBAL_ORDER_LANGUAGE_CODES = CAFE24.getDeprecatedNamespace('EC_GLOBAL_ORDER_LANGUAGE_CODES');
+CAFE24.GLOBAL_MEMBER_LANGUAGE_CODES = {  
+sAdminWebEditorLanguageCode: 'ko' ,
+oNotAvailDecimalPointLanguages: ["ko_KR","ja_JP","zh_TW","vi_VN"],
+oAddressCountryCode: {"KOR":"ko_KR","JPN":"ja_JP","CHN":"zh_CN","TWN":"zh_TW","VNM":"vi_VN","PHL":"en_PH"},
+};
+var EC_GLOBAL_MEMBER_LANGUAGE_CODES = CAFE24.getDeprecatedNamespace('EC_GLOBAL_MEMBER_LANGUAGE_CODES');
+CAFE24.GLOBAL_BOARD_LANGUAGE_CODES = {  
+bUseLegacyBoard: true
+};
+var EC_GLOBAL_BOARD_LANGUAGE_CODES = CAFE24.getDeprecatedNamespace('EC_GLOBAL_BOARD_LANGUAGE_CODES');
+CAFE24.GLOBAL_MALL_LANGUAGE_CODES = {
+oDesign: {
+oDesignAddReplaceInfo: {"group_id":"SKIN.ADD.ADMIN.DESIGNDETAIL","replacement":{"KR":"KOREAN","US":"ENGLISH","JP":"JAPANESE","CN":"SIMPLIFIED.CHINESE","TW":"TRADITIONAL.CHINESE","ES":"SPANISH","PT":"PORTUGUESE","PH":"ENGLISH"}},
+oDesignDetailLanguageCountryMap: {"KR":"ko_KR","JP":"ja_JP","CN":"zh_CN","TW":"zh_TW","US":"en_US","ES":"es_ES","PT":"pt_PT","PH":"en_PH"},
+oSmartDesignSwitchTipLink: {"edibot":{"img":"\/\/img.echosting.cafe24.com\/smartAdmin\/img\/design\/img_editor_dnd.png","link":"\/\/ecsupport.cafe24.com\/board\/free\/list.html?board_act=list&board_no=12&category_no=9&cate_no=9"},"smart":{"img":"\/\/img.echosting.cafe24.com\/smartAdmin\/img\/design\/ko_KR\/img_editor_smart.png","link":"\/\/sdsupport.cafe24.com"}},
+oSmartDesignDecoShopList: ["ko_KR","ja_JP","zh_CN","en_US","zh_TW","es_ES","pt_PT"],
+oSmartDesignDecoMultilingual: {"list":{"ko_KR":"KOREAN","en_US":"ENGLISH","ja_JP":"JAPANESE","zh_CN":"SIMPLIFIED.CHINESE","zh_TW":"TRADITIONAL.CHINESE","es_ES":"SPANISH","pt_PT":"PORTUGUESE","vi_VN":"VIETNAMESE"},"group_id":"EDITOR.LAYER.EDITING.DECO"},
+aSmartDesignModuleShopList: ["ko_KR","ja_JP","zh_CN","en_US","zh_TW","es_ES","pt_PT"]
+},
+oStore: {
+oMultiShopCurrencyInfo: {"en_US":{"currency":"USD"},"zh_CN":{"currency":"USD","sub_currency":"CNY"},"ja_JP":{"currency":"JPY"},"zh_TW":{"currency":"TWD"},"es_ES":{"currency":"EUR"},"pt_PT":{"currency":"EUR"},"ko_KR":{"currency":"KRW"},"vi_VN":{"currency":"VND"},"en_PH":{"currency":"PHP"}},
+oBrowserRedirectLanguage: {"ko":{"primary":"ko_KR","secondary":"en_US"},"en":{"detail":{"en-ph":{"primary":"en_PH","secondary":"en_US"},"en-us":{"primary":"en_US","secondary":"es_ES"},"default":{"primary":"en_US","secondary":"es_ES"}}},"ja":{"primary":"ja_JP","secondary":"en_US"},"zh":{"detail":{"zh-cn":{"primary":"zh_CN","secondary":"en_US"},"zh-tw":{"primary":"zh_TW","secondary":"zh_CN"},"default":{"primary":"en_US","secondary":"ko_KR"}}},"es":{"primary":"es_ES","secondary":"en_US"},"pt":{"primary":"pt_PT","secondary":"en_US"},"vi":{"primary":"vi_VN","secondary":"en_US"},"default":{"primary":"en_US","secondary":"ko_KR"}},
+aChangeableLanguages: ["en_US","ja_JP","ko_KR"],
+aNoZipCodeLanguage: ["ko_KR","ja_JP"]
+},
+oMobile: {
+sSmartWebAppFaqUrl: "https://support.cafe24.com/hc/ko/articles/8466586607641",
+sAmpFaqUrl: "https://ecsupport.cafe24.com/board/free/read.html?no=1864&board_no=5&category_no=13&cate_no=13&category_no=13&category_no=13",
+},
+oPromotion: {
+bQrCodeAvailable: true,
+bSnsMarketingAvailable: true
+},
+oShippingReverseAddressLanguage: ["vi_VN","en_PH"] ,
+oGlobalStandardSwitchHelpCodeLink: {"SH.DS":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/SH.DS.html"},"PR.DS":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/PR.DS.html"},"OR.SM.BO":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/OR.SM.BO.html"},"DE.DS":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/DE.DS.html"},"MB.DS":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/MB.DS.html"},"PM.DS":{"link":"\/\/serviceguide.cafe24shop.com\/en_PH\/PM.DS.html"}},
+getAdminMainLocaleLanguage: function(sSkinLocaleCode) {
+var oLocaleData = [];
+var locale = "";
+var shopLangName = "";
+if (sSkinLocaleCode == "US") {
+locale = "en_US";
+shopLangName = "ENGLISH";
+} else if (sSkinLocaleCode == "JP") {
+locale = "ja_JP";
+shopLangName = "JAPANESE";
+} else if (sSkinLocaleCode == "CN") {
+locale = "zh_CN";
+shopLangName = "SIMPLIFIED.CHINESE";
+} else if (sSkinLocaleCode == "TW") {
+locale = "zh_TW";
+shopLangName = "TRADITIONAL.CHINESE";
+} else if (sSkinLocaleCode == "ES") {
+locale = "es_ES";
+shopLangName = "SPANISH";
+} else if (sSkinLocaleCode == "PT") {
+locale = "pt_PT";
+shopLangName = "PORTUGUESE";
+} else if (sSkinLocaleCode == "VN") {
+locale = "vi_VN";
+shopLangName = "VIETNAMESE";
+} else if(sSkinLocaleCode == "PH") {
+locale = "en_PH";
+shopLangName = "ENGLISH.PH";
+}
+oLocaleData["locale"] = locale;
+oLocaleData["shopLangName"] = shopLangName;
+return oLocaleData;
+}
+};
+var EC_GLOBAL_MALL_LANGUAGE_CODES = CAFE24.getDeprecatedNamespace('EC_GLOBAL_MALL_LANGUAGE_CODES');
+CAFE24.GLOBAL_DATETIME_INFO = {
+oConstants: {"STANDARD_DATE_REGEX":"\/([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))\/","IN_ZONE":"inZone","OUT_ZONE":"outZone","IN_FORMAT":"inFormat","OUT_FORMAT":"outFormat","IN_DATE_FORMAT":"inDateFormat","IN_TIME_FORMAT":"inTimeFormat","OUT_DATE_FORMAT":"outDateFormat","OUT_TIME_FORMAT":"outTimeFormat","IN_FORMAT_DATE_ONLY":1,"IN_FORMAT_TIME_ONLY":2,"IN_FORMAT_ALL":3,"OUT_FORMAT_DATE_ONLY":1,"OUT_FORMAT_TIME_ONLY":2,"OUT_FORMAT_ALL":3,"DATE_ONLY":"YYYY-MM-DD","TIME_ONLY":"HH:mm:ss","FULL_TIME":"YYYY-MM-DD HH:mm:ss","ISO_8601":"YYYY-MM-DD[T]HH:mm:ssZ","YEAR_ONLY":"YYYY","MONTH_ONLY":"MM","DAY_ONLY":"DD","WEEK_ONLY":"e","TIME_H_I_ONLY":"HH:mm","TIME_HOUR_ONLY":"HH","TIME_MINUTE_ONLY":"mm","POSTGRE_FULL_TIME":"YYYY-MM-DD HH24:MI:SS","POSTGRE_TIME_ONLY":" HH24:MI:SS","MICRO_SECOND_ONLY":"u","SEOUL":"Asia\/Seoul","TOKYO":"Asia\/Tokyo","SHANGHAI":"Asia\/Shanghai","TAIPEI":"Asia\/Taipei","HANOI":"Asia\/Bangkok","LOS_ANGELES":"America\/Los_Angeles","LISBON":"Europe\/Lisbon","MADRID":"Europe\/Madrid","SINGAPORE":"Asia\/Singapore","UTC":"Etc\/UTC","MAX_DATETIME":"9999-12-31 23:59:59"},
+oOptions: {"inZone":"Asia\/Seoul","inFormat":"YYYY-MM-DD HH:mm:ss","inDateFormat":"YYYY-MM-DD","inTimeFormat":"HH:mm:ss","outZone":"Asia\/Seoul","outFormat":"YYYY-MM-DD HH:mm:ss","outDateFormat":"YYYY-MM-DD","outTimeFormat":"HH:mm:ss"},
+oPolicies: {"shop":{"outZone":"Asia\/Seoul","outFormat":"YYYY-MM-DD HH:mm:ss","outDateFormat":"YYYY-MM-DD","outTimeFormat":"HH:mm:ss"}},
+sOverrideTimezone: '',
+sMomentNamespace: 'EC_GLOBAL_MOMENT'
+};
+CAFE24.FRONT_JS_CONFIG_MANAGE = {"sSmartBannerScriptUrl":"https:\/\/app4you.cafe24.com\/SmartBanner\/tunnel\/scriptTags?vs=1563164396689206","sMallId":"squeem","sDefaultAppDomain":"https:\/\/app4you.cafe24.com","sWebLogOffFlag":"F"};
+var EC_FRONT_JS_CONFIG_MANAGE = CAFE24.getDeprecatedNamespace('EC_FRONT_JS_CONFIG_MANAGE');
+CAFE24.FRONT_JS_CONFIG_MEMBER = {"sAuthUrl":"https:\/\/ipin-ec.cafe24.com\/certify\/v1\/?action=auth"};
+var EC_FRONT_JS_CONFIG_MEMBER = CAFE24.getDeprecatedNamespace('EC_FRONT_JS_CONFIG_MEMBER');
+CAFE24.FRONT_JS_CONFIG_SHOP = {"search_period":[],"calendar_config":{"maxDate":"2028-09-16","locale":"ko"},"recent_count":4,"adult19BaseTinyImage":"squeem_adult.png","adult19Warning":"F","cdnUrl":""};
+var EC_FRONT_JS_CONFIG_SHOP = CAFE24.getDeprecatedNamespace('EC_FRONT_JS_CONFIG_SHOP');
+typeof window.CAFE24 === "undefined" && (window.CAFE24 = {});
+CAFE24.BOARD = {"config_6":{"board_no":6,"use_block":"F","use_report":"F"}};
+CAFE24.FRONTEND = {"IS_RENDERED_LOGIN":"F","FW_MANIFEST_CACHE_REVISION":2609161505,"IS_WEB_VIEW":"F"};
+CAFE24.ROUTE = {"is_mobile":false,"is_need_route":false,"language_code":"ZZ","path":{"origin":"\/board\/product\/list.html","result":"\/board\/product\/list.html","prefix":""},"shop_no":0,"skin_code":"default","support_language_list":{"ar":"ar_EG","ar-EG":"ar_EG","de":"de_DE","de-DE":"de_DE","en":"en_US","en-IN":"en_IN","en-PH":"en_PH","en-US":"en_US","es":"es_ES","es-ES":"es_ES","hi":"hi_IN","hi-IN":"hi_IN","id":"id_ID","id-ID":"id_ID","it":"it_IT","it-IT":"it_IT","ja":"ja_JP","ja-JP":"ja_JP","ko":"ko_KR","ko-KR":"ko_KR","ms":"ms_MY","ms-MY":"ms_MY","pt":"pt_PT","pt-PT":"pt_PT","ru":"ru_RU","ru-RU":"ru_RU","th":"th_TH","th-TH":"th_TH","tr":"tr_TR","tr-TR":"tr_TR","vi":"vi_VN","vi-VN":"vi_VN","zh":"zh_CN","zh-CN":"zh_CN","zh-HK":"zh_HK","zh-MO":"zh_MO","zh-SG":"zh_SG","zh-TW":"zh_TW"}};
+</script>
+<link rel="stylesheet" type="text/css" href="//img.echosting.cafe24.com/editors/froala/css/froala_style_ec.min.css?vs=2609161505" charset="utf-8"/>
+
+<link rel="stylesheet" type="text/css" href="/ind-script/optimizer.php?filename=ldExDsIwDAXQPcrKOcwAF4AbIHEAJ3VRVDe2HFeC21MmKBISWb_-8x-sJjfDGYyaLJYJcmswmlSHLPMsNa7BTn-3KIcmvHiRGpLcu-qLe98A44OsBzgmpi4gGrhUCglr_drikuBaFPMEl88rZ2SqAxoc4jHuYWR0LXnaYlSFk6ANW7vGMb3imFjy1EeMVMz_Me9fPgE&type=css&k=14c70ebc0a9f7f23e5da8ec1ff8a906067997263&t=1744181067"  /><link rel="stylesheet" type="text/css" href="/ind-script/optimizer_user.php?filename=lZJBDgIhDEUPoFvPQfQUujPeoJaCxJmW0I7G28uM7oyxLoH3SH_6NdIqkpbMQa-Ft7uAqmGUOA0UzgIthqGoHQGvkGndHzf6W1GChhcvXSEXzl4awWiUm3uWNDFaEf7CD_CQycIZtOAio4yjn35deGm9l0rNS0819qy_c77FQbKYVDev1n-fpZT-d9ivLF3YE8SvyT-lZXUHTuI25lpkaQ-3kETsj4lq60e0EyGx-acSvlHTXr-Ks_QE&type=css&k=745f9798b3ced5c3a55e265dae2c728f3892654d&t=1529555317&user=T"  />
+
+<title>입자마자 몸매가 살아나는 속옷 바디쉐이퍼</title></head>
+<body><script language="javascript">document.write(unescape("\x3c\x73\x63\x72\x69\x70\x74\x20\x6c\x61\x6e\x67\x75\x61\x67\x65\x3d\x22\x6a\x61\x76\x61\x73\x63\x72\x69\x70\x74\x22\x3e\x0d\x0a\x66\x75\x6e\x63\x74\x69\x6f\x6e\x20\x70\x6f\x69\x6e\x74\x28\x29\x20\x7b\x0d\x0a\x20\x20\x20\x20\x24\x28\x22\x2e\x70\x6f\x69\x6e\x74\x22\x29\x2e\x61\x6e\x69\x6d\x61\x74\x65\x28\x7b\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x6d\x61\x72\x67\x69\x6e\x54\x6f\x70\x3a\x20\x22\x30\x70\x78\x22\x0d\x0a\x20\x20\x20\x20\x7d\x2c\x20\x35\x30\x30\x2c\x20\x22\x22\x2c\x20\x66\x75\x6e\x63\x74\x69\x6f\x6e\x20\x28\x29\x20\x7b\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x24\x28\x74\x68\x69\x73\x29\x2e\x61\x6e\x69\x6d\x61\x74\x65\x28\x7b\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x6d\x61\x72\x67\x69\x6e\x54\x6f\x70\x3a\x20\x22\x31\x33\x70\x78\x22\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x7d\x2c\x20\x35\x30\x30\x2c\x20\x22\x22\x2c\x20\x66\x75\x6e\x63\x74\x69\x6f\x6e\x20\x28\x29\x20\x7b\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x70\x6f\x69\x6e\x74\x28\x29\x3b\x0d\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x7d\x29\x3b\x0d\x0a\x20\x20\x20\x20\x7d\x29\x3b\x0d\x0a\x0d\x0a\x7d\x0d\x0a\x24\x28\x64\x6f\x63\x75\x6d\x65\x6e\x74\x29\x2e\x72\x65\x61\x64\x79\x28\x66\x75\x6e\x63\x74\x69\x6f\x6e\x20\x28\x29\x20\x7b\x0d\x0a\x20\x20\x20\x20\x70\x6f\x69\x6e\x74\x28\x29\x3b\x0d\x0a\x7d\x29\x3b\x0d\x0a\x3c\x2f\x73\x63\x72\x69\x70\x74\x3e"));</script>
+<div id="accNav">
+    <p><a href="#category">전체상품목록 바로가기</a></p>
+    <p><a href="#contents">본문 바로가기</a></p>
+</div>
+
+<div id="wrap">
+    <div id="main">
+        <div id="header">
+            <div class="header_left" style="border-top: 1px solid #fff;">
+                <h1 class="xans-element- xans-layout xans-layout-logotop "><!-- 로고 -->
+<a href="/index.html"><img alt="바디쉐이퍼" src="/web/upload/haetsal/layout/logo_top.gif"/></a>
+</h1>
+            </div>
+            <div class="header_center" style="border-top: 1px solid #fff;">
+                <div class="xans-element- xans-layout xans-layout-statelogoff "><!-- 메뉴 로그인 전 -->
+<a href="/member/login.html"><img alt="로그인" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_01.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_01.png'" src="/web/upload/haetsal/layout/menu_top_01.png"/></a>
+<a href="/member/join.html"><img alt="회원가입" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_02.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_02.png'" src="/web/upload/haetsal/layout/menu_top_02.png"/></a>
+<a href="/myshop/index.html"><img alt="마이페이지" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_03.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_03.png'" src="/web/upload/haetsal/layout/menu_top_03.png"/></a>
+<a href="/order/basket.html"><img alt="장바구니" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_04.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_04.png'" src="/web/upload/haetsal/layout/menu_top_04.png"/></a>
+<a href="/myshop/order/list.html"><img alt="주문내역" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_05.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_05.png'" src="/web/upload/haetsal/layout/menu_top_05.png"/></a>
+<a href="/myshop/wish_list.html"><img alt="관심상품" onmouseout="this.src='/web/upload/haetsal/layout/menu_top_06.png'" onmouseover="this.src='/web/upload/haetsal/layout/menu_top_on_06.png'" src="/web/upload/haetsal/layout/menu_top_06.png"/></a>
+</div>
+				<p class="xans-element- xans-layout xans-layout-statelogoff point "><span class="text">+2,000 won</span>
+</p>
+                            </div>
+            <div class="header_right">
+				<div class="snslink_hs">
+					<ul>
+						<li><a href="http://section.blog.naver.com/" target="_blank"><i class="xi-naver" alt="네이버 블로그"></i></a></li>
+						<li><a href="https://www.facebook.com/" target="_blank"><i class="xi-facebook" alt="페이스북"></i></a></li>
+						<li><a href="https://twitter.com/" target="_blank"><i class="xi-twitter" alt="트위터"></i></a></li>
+						<li><a href="https://www.instagram.com/" target="_blank"><i class="xi-instagram" alt="인스타그램"></i></a></li>
+						<li><a href="https://story.kakao.com" target="_blank"><i class="xi-kakaostory" alt="카카오스토리"></i></a></li>
+        
+						<!-- 추가아이콘
+						<li><a href="https://youtube.com" target="_blank"><i class="xi-youtube-play" alt="유튜브"></i></a></li>
+						<li><a href="http://www.kakao.com/talk" target="_blank"><i class="xi-kakao" alt="카카오톡"></i></a></li>
+						-->
+					</ul>
+				</div>
+				<form id="searchBarForm" name="" action="/product/search.html" method="get" target="_self" enctype="multipart/form-data" >
+<input id="banner_action" name="banner_action" value="" type="hidden"  /><div style="clear: both; float: right;" class="xans-element- xans-layout xans-layout-searchheader "><!-- 검색 -->
+<!--	
+					$product_page=/product/detail.html	
+					$category_page=/product/list.html	
+					-->
+<fieldset>
+					<input id="keyword" name="keyword" fw-filter="" fw-label="검색어" fw-msg="" class="inputTypeText" placeholder="" onmousedown="SEARCH_BANNER.clickSearchForm(this)" value="" type="text"  /><img alt="검색" class="btn_search" onclick="SEARCH_BANNER.submitSearchBanner(this); return false;" src="/web/upload/haetsal/layout/btn_search.jpg"/></fieldset>
+</div>
+</form>            </div>
+            <div style="clear: both;">
+				<!--<p style="float: left;"><img alt="" border="0" src="/web/upload/haetsal/layout/help.jpg"/></p>-->
+                <div style="float: right;" class="xans-element- xans-layout xans-layout-boardinfo"><!-- 메뉴 게시판 -->
+<ul>
+                        <li class="xans-record-"><a href="/board/free/list.html?board_no=1">공지사항</a></li>
+                        <li class="xans-record-"><a href="/board/free/list.html?board_no=2">입금 확인</a></li>
+<li class="xans-record-"><a href="/board/free/list.html?board_no=3">교환 및 반품 요청</a></li>
+<li class="xans-record-"><a href="/board/product/list.html?board_no=4">바디쉐퍼 사용후기</a></li>
+<li class="xans-record-"><a href="/board/product/list.html?board_no=6">상품 Q&A입니다</a></li>
+<li class="xans-record-"><a href="/board/product/list.html?board_no=5">몸짱 관련 기사</a></li>
+                    </ul>
+</div>
+            </div>
+			<div>
+            <div id="menu_cate">
+                <div class="xans-element- xans-layout xans-layout-category"><!-- 메뉴 카테고리 -->
+<div class="postion">
+                        <ul>
+                            <li class="pst76 first_menu xans-record-"><a href="/product/list.html?cate_no=76">남성 상의보정</a></li>
+                            <li class="pst49 xans-record-"><a href="/product/list.html?cate_no=49">EQUMEN</a></li>
+<li class="pst52 xans-record-"><a href="/product/list.html?cate_no=52">남성 하의 보정</a></li>
+<li class="pst53 xans-record-"><a href="/product/list.html?cate_no=53">여성 상하의보정</a></li>
+<li class="pst98 xans-record-"><a href="/product/list.html?cate_no=98"> 파격할인 제품</a></li>
+                        </ul>
+                    </div>
+</div>
+            </div>
+			</div>
+        </div>
+        <hr class="layout"/>
+        <div id="container">
+            <div id="snb"><!-- 메인페이지 좌측 메뉴 부분 -->
+            </div>
+            <hr class="layout"/>
+            <div id="contents">
+                
+<div id="sub_page">
+<div class="xans-element- xans-board xans-board-listpackage-4 xans-board-listpackage xans-board-4 "><div class="xans-element- xans-board xans-board-title-4 xans-board-title xans-board-4 "><div class="path">
+            <h3>현재 위치</h3>
+            <ol>
+                <li class="first"><a href="/">홈</a></li>
+                <li><a href="/board/index.html">게시판</a></li>
+                <li title="현재 위치">상품 Q&A입니다</li>
+            </ol>
+        </div>
+<div class="title">
+            <p class="imgArea"><img src="/web/upload/bar_qna.jpg"  /></p>
+        </div>
+</div>
+<div class="boardSort">
+                <span class="xans-element- xans-board xans-board-replysort-4 xans-board-replysort xans-board-4 "><select id="reply_sort" name="reply_sort" fw-filter="" fw-label="" fw-msg="" onchange="BOARD.change_reply_sort(this);"  >
+<option value="" selected="selected">전체글보기</option>
+<option value="N">답변전 글보기</option>
+<option value="Y">답변완료 글보기</option>
+</select></span>
+    </div>
+<div class="boardList">
+        <table border="1" summary="">
+        <caption>상품 게시판 목록</caption>
+
+        <thead class="xans-element- xans-board xans-board-listheader-4 xans-board-listheader xans-board-4 "><tr style=" ">
+                <th scope="col" class="number"> no</th>
+                <th scope="col" class="thumb">product</th>
+                <th scope="col" class="category displaynone">category</th>
+                <th scope="col" class="subject">subject</th>
+                <th scope="col" class="writer">writer</th>
+                <th scope="col" class="date ">date</th>
+                <th scope="col" class="hit ">hit</th>
+                <th scope="col" class="recom displaynone">recom</th>
+                <th scope="col" class="grade displaynone">point</th>
+            </tr>
+</thead>
+        <tbody class="xans-element- xans-board xans-board-notice-4 xans-board-notice xans-board-4 notice"><!--
+                $count = 2
+                $product_name_cut = 30
+            -->
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> <img alt="공지" src="/web/upload/haetsal/board/notice.gif"/></td>
+                <td class="thumb"><a href="/product/detail.html"></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('6844','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=6844&board_no=6&page=2">KBS2 "굿모닝 대한민국"- 보정속옷의 모든 것</a> <span></span>
+                </td>
+                <td class="writer"><img alt="대표 관리자" src="/web/upload/haetsal/board/admin_icon.gif"/></td>
+                <td class="date ">2013.01.31</td>
+                <td class="hit ">2963</td>
+                <td class="recom displaynone">7</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> <img alt="공지" src="/web/upload/haetsal/board/notice.gif"/></td>
+                <td class="thumb"><a href="/product/detail.html"></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('4958','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=4958&board_no=6&page=2">KBS2 아침뉴스타임 화제포착에 소개되었습니다</a> <span></span>
+                </td>
+                <td class="writer"><img alt="대표 관리자" src="/web/upload/haetsal/board/admin_icon.gif"/></td>
+                <td class="date ">2011.06.10</td>
+                <td class="hit ">3087</td>
+                <td class="recom displaynone">7</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+</tbody>
+
+        <tbody class="xans-element- xans-board xans-board-list-4 xans-board-list xans-board-4"><!--
+                $count = 10
+                $product_name_cut = 30
+            -->
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3413</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=13"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_13.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8671','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8671&board_no=6&page=2">사이즈문의</a> <span>[+1]</span>
+                </td>
+                <td class="writer">전혜인</td>
+                <td class="date ">2018.04.02</td>
+                <td class="hit ">2</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3412</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=64"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_64.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8665','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8665&board_no=6&page=2">제품문의</a> <span>[+1]</span>
+                </td>
+                <td class="writer">서동주</td>
+                <td class="date ">2018.03.15</td>
+                <td class="hit ">3</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3411</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=34"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_34.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8663','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=8663&board_no=6&page=2">팬티만구매할수있나요?</a> <span>[+1]</span>
+                </td>
+                <td class="writer">정은주</td>
+                <td class="date ">2018.03.14</td>
+                <td class="hit ">405</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3410</td>
+                <td class="thumb"><a href="/product/detail.html"></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8661','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8661&board_no=6&page=2">주소지 오류</a> <span>[+1]</span>
+                </td>
+                <td class="writer">이창희</td>
+                <td class="date ">2018.02.16</td>
+                <td class="hit ">1</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3409</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=82"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_82.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8657','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=8657&board_no=6&page=2">사이즈</a> <span>[+1]</span>
+                </td>
+                <td class="writer">김현주</td>
+                <td class="date ">2018.01.11</td>
+                <td class="hit ">287</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3408</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=48"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_48.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8649','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8649&board_no=6&page=2">입고</a> <span>[+1]</span>
+                </td>
+                <td class="writer">mhkim1207</td>
+                <td class="date ">2017.12.07</td>
+                <td class="hit ">1</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3407</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=10"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_10.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8645','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=8645&board_no=6&page=2">재고 있나요?</a> <span>[+1]</span>
+                </td>
+                <td class="writer">이기원</td>
+                <td class="date ">2017.11.16</td>
+                <td class="hit ">772</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3406</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=80"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_80.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8631','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                     <a href="/board/product/read.html?no=8631&board_no=6&page=2">사이즈 교환문의</a> <span>[+1]</span>
+                </td>
+                <td class="writer">이윤진</td>
+                <td class="date ">2017.10.24</td>
+                <td class="hit ">794</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3405</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=14"><img src="//bodyshaper.co.kr/web/product/tiny/squeem_14.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8609','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8609&board_no=6&page=2">배송은...</a> <span>[+1]</span>
+                </td>
+                <td class="writer">황유미</td>
+                <td class="date ">2017.09.16</td>
+                <td class="hit ">2</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+<tr style="background-color:#FFFFFF; color:#555555;" class="xans-record-">
+                <td class="number"> 3404</td>
+                <td class="thumb"><a href="/product/detail.html?product_no=92"><img src="//bodyshaper.co.kr/web/product/tiny/201807/92_shop1_15311830883697.jpg"  border="0" alt="" /></a></td>
+                <td class="category displaynone"></td>
+                <td class="subject">
+                    <span class="displaynone">
+                        <a href="#none" onclick="BOARD.viewTarget('8607','6',this);"><img src="http://img.echosting.cafe24.com/design/skin/default/board/btn_unfold.gif" alt="내용 보기"/></a>
+                    </span>
+                    <img src="//img0001.echosting.cafe24.com/front/type_b/image/common/icon_lock.gif"  alt="비밀글" class="ec-common-rwd-image" /> <a href="/board/product/read.html?no=8607&board_no=6&page=2">효과문의</a> <span>[+1]</span>
+                </td>
+                <td class="writer">오이지</td>
+                <td class="date ">2017.09.11</td>
+                <td class="hit ">2</td>
+                <td class="recom displaynone">0</td>
+                <td class="grade displaynone"><img src="/web/upload/haetsal/board/ico_point0.gif" alt="0점"/></td>
+            </tr>
+</tbody>
+        </table>
+    </div>
+<div class="xans-element- xans-board xans-board-buttonlist-4 xans-board-buttonlist xans-board-4 "><a href="/board/product/write.html?board_no=6&page=2" class=""><img src="/web/upload/haetsal/board/btn_write.gif" alt="글쓰기"/></a>
+</div>
+</div>
+
+<form id="boardSearchForm" name="" action="/board/product/list.html" method="get" target="_top" enctype="multipart/form-data" >
+<input id="board_no" name="board_no" value="6" type="hidden"  />
+<input id="page" name="page" value="1" type="hidden"  />
+<input id="board_sort" name="board_sort" value="" type="hidden"  /><div class="xans-element- xans-board xans-board-search-4 xans-board-search xans-board-4 "><fieldset class="boardSearch">
+        <legend>게시물 검색</legend>
+        <p><select id="search_date" name="search_date" fw-filter="" fw-label="" fw-msg=""  >
+<option value="week">일주일</option>
+<option value="month">한달</option>
+<option value="month3">세달</option>
+<option value="all">전체</option>
+</select> <select id="search_key" name="search_key" fw-filter="" fw-label="" fw-msg=""  >
+<option value="subject">제목</option>
+<option value="content">내용</option>
+<option value="writer_name">글쓴이</option>
+<option value="member_id">아이디</option>
+<option value="nick_name">별명</option>
+<option value="product">상품정보</option>
+</select> <input id="search" name="search" fw-filter="" fw-label="" fw-msg="" class="inputTypeText" placeholder="" value="" type="text"  /> <a href="#none" onclick="BOARD.form_submit('boardSearchForm');"><img src="/web/upload/haetsal/board/btn_find.gif" alt="찾기"/></a></p>
+    </fieldset>
+</div>
+</form>
+<div class="xans-element- xans-board xans-board-paging-4 xans-board-paging xans-board-4 paging"><p><a href="" style="display:none"><img src="/web/upload/haetsal/btn_page_first.gif" alt="첫 페이지"/></a></p>
+<p><a href="?board_no=6&page=1"><img src="/web/upload/haetsal/btn_page_prev.gif" alt="이전 페이지"/></a></p>
+<ol>
+        <li class="xans-record-"><a href="?board_no=6&page=1" class="other">[1]</a></li>
+        <li class="xans-record-"><a href="?board_no=6&page=2" class="this">[2]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=3" class="other">[3]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=4" class="other">[4]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=5" class="other">[5]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=6" class="other">[6]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=7" class="other">[7]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=8" class="other">[8]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=9" class="other">[9]</a></li>
+<li class="xans-record-"><a href="?board_no=6&page=10" class="other">[10]</a></li>
+    </ol>
+<p><a href="?board_no=6&page=3"><img src="/web/upload/haetsal/btn_page_next.gif" alt="다음 페이지"/></a></p>
+<p><a href="" style="display:none"><img src="/web/upload/haetsal/btn_page_last.gif" alt="마지막 페이지"/></a></p>
+</div>
+
+<!-- 관리자 전용 메뉴 -->
+
+</div>
+<!-- //관리자 전용 메뉴 -->
+            </div>
+        </div>
+        <hr class="layout"/>
+        <div id="footer">
+            <div class="xans-element- xans-layout xans-layout-footer"><p style="width: 1200px; border-top: 1px solid #E6E6E6; height: 1px;"></p>
+<div class="help_info" style="float: left; width: 300px; padding: 0px 0px 0px 50px;">
+					<p class="title"><font color="#333333">customer</font> center</p>
+					<p class="number">031-631-4424</p>
+					
+					<p class="info1">평일 : 오전 10:00 - 오후5시
+토,일요일 : 휴무</p>
+                </div>
+<div style="float: left;">
+					<img alt="" src="/web/upload/haetsal/layout/bottom_menu_01.jpg"/>
+				     <a href="/product/recent_view_product.html"><img alt="최근본상품" onmouseout="this.src='/web/upload/haetsal/layout/bottom_menu_02.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/bottom_menu_on_02.jpg'" src="/web/upload/haetsal/layout/bottom_menu_02.jpg"/></a>
+					<a href="/order/basket.html"><img alt="장바구니" onmouseout="this.src='/web/upload/haetsal/layout/bottom_menu_03.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/bottom_menu_on_03.jpg'" src="/web/upload/haetsal/layout/bottom_menu_03.jpg"/></a>
+					<a href="/link/bookmark.html" target="_blank" onclick="winPop(this.href); return false;"><img alt="즐겨찾기" onmouseout="this.src='/web/upload/haetsal/layout/bottom_menu_04.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/bottom_menu_on_04.jpg'" src="/web/upload/haetsal/layout/bottom_menu_04.jpg"/></a>
+					<a href="/member/privacy.html"><img alt="개인정보보호정책" onmouseout="this.src='/web/upload/haetsal/layout/bottom_menu_05.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/bottom_menu_on_05.jpg'" src="/web/upload/haetsal/layout/bottom_menu_05.jpg"/></a>
+					<img alt="" src="/web/upload/haetsal/layout/bottom_menu_06.jpg"/>
+				 </div>
+<div class="help_info" style="float: left; width: 300px; padding: 0px 0px 0px 50px;">
+					<p class="title"><font color="#333333">banking</font> info</p>
+					<p class="info_kor">국민 <span class="account">272701 04 105 099</span></p>
+					<p class="info"> </p>
+					<p class="info_kor">예금주 : 에스제이지(주)</p>
+                </div>
+<p style="clear: both; width: 1200px; border-top: 1px solid #E6E6E6; height: 1px;"></p>
+<div style="both: clear;">
+					<img alt="" src="/web/upload/haetsal/layout/menu_home_01.jpg"/>
+				     <a href="/"><img alt="홈" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_02.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_02.jpg'" src="/web/upload/haetsal/layout/menu_home_02.jpg"/></a>
+					<a href="/shopinfo/company.html"><img alt="회사소개" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_03.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_03.jpg'" src="/web/upload/haetsal/layout/menu_home_03.jpg"/></a>
+					<a href="/member/agreement.html"><img alt="이용약관" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_04.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_04.jpg'" src="/web/upload/haetsal/layout/menu_home_04.jpg"/></a>
+					<a href="/member/privacy.html"><img alt="개인정보보호정책" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_05.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_05.jpg'" src="/web/upload/haetsal/layout/menu_home_05.jpg"/></a>
+					<a href="/shopinfo/guide.html"><img alt="이용안내" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_06.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_06.jpg'" src="/web/upload/haetsal/layout/menu_home_06.jpg"/></a>
+					<a href="#top"><img alt="위로" onmouseout="this.src='/web/upload/haetsal/layout/menu_home_07.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_home_on_07.jpg'" src="/web/upload/haetsal/layout/menu_home_07.jpg"/></a>
+					<img alt="" src="/web/upload/haetsal/layout/menu_home_08.jpg"/>
+				 </div>
+<p style="clear: both; width: 1200px; border-top: 1px solid #E6E6E6; height: 1px;"></p>
+<p class="cominfo" style="clear: both;">
+					<span><b>COMPANY</b>에스제이지(주)</span>
+					<span><b>OWNER</b>김태은</span>
+					<span><b>WEB MASTER</b>최남희</span><span class=""><a href="mailto:7494424@naver.com"><u>(7494424@naver.com)</u></a></span>
+					<span class=""><b>tel.</b>031-631-4424   </span>					<br/><span><b>address</b>17343 경기도 이천시 대월면 대평로214번길 22 </span>
+					<span><b>business licence.</b>105-86-29193</span>
+					<span><b>mail-order licence NO.</b>2015-경기이천시-150</span>
+					<br/><span class="right"><b>copyright (c)  <font color="#454545">바디쉐이퍼</font>   all rights reserved.</b></span><br/>
+				</p>
+<div>
+					<img alt="" src="/web/upload/haetsal/layout/menu_company_01.jpg"/>
+				     <a href="/"><img alt="호스팅" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_02.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_02.jpg'" src="/web/upload/haetsal/layout/menu_company_02.jpg"/></a>
+					<a href="/"><img alt="보안인증" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_03.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_03.jpg'" src="/web/upload/haetsal/layout/menu_company_03.jpg"/></a>
+					<a href="http://www.ftc.go.kr" target="_blank"><img alt="공정위" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_04.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_04.jpg'" src="/web/upload/haetsal/layout/menu_company_04.jpg"/></a>
+					<a href="http://www.ftc.go.kr/info/bizinfo/communicationList.jsp" target="_blank"><img alt="사업자정보확인" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_05.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_05.jpg'" src="/web/upload/haetsal/layout/menu_company_05.jpg"/></a>
+					<a href="http://www.inicis.com" target="_blank"><img alt="결제시스템" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_06.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_06.jpg'" src="/web/upload/haetsal/layout/menu_company_06.jpg"/></a>
+					<a href="https://www.inicis.com/ini_01.jsp"><img alt="에스크로" onmouseout="this.src='/web/upload/haetsal/layout/menu_company_07.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/menu_company_on_07.jpg'" src="/web/upload/haetsal/layout/menu_company_07.jpg"/></a>
+					<img alt="" src="/web/upload/haetsal/layout/menu_company_08.jpg"/>
+				 </div>
+</div>
+        </div>
+    </div>
+    <div id="quick">
+        <div class="xans-element- xans-link xans-link-quick "><ul>
+                <li><a href="/link/bookmark.html" target="_blank" onclick="winPop(this.href); return false;"><img alt="즐겨찾기" onmouseout="this.src='/web/upload/haetsal/layout/quickR_01.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_01.jpg'" src="/web/upload/haetsal/layout/quickR_01.jpg"/></a></li>
+                <li><a href="/link/shortcut.html" target="_blank" onclick="winPop(this.href); return false;"><img alt="아이콘" onmouseout="this.src='/web/upload/haetsal/layout/quickR_02.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_02.jpg'" src="/web/upload/haetsal/layout/quickR_02.jpg"/></a></li>
+                <li><a href="https://www.cjlogistics.com/ko/main" target="_blank"><img alt="배송조회" onmouseout="this.src='/web/upload/haetsal/layout/quickR_03.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_03.jpg'" src="/web/upload/haetsal/layout/quickR_03.jpg"/></a></li>
+                <!--<li><a href="http://blog.naver.com/" target="_blank"><img alt="블로그" onmouseout="this.src='/web/upload/haetsal/layout/quickR_04.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_04.jpg'" src="/web/upload/haetsal/layout/quickR_04.jpg"/></a></li>
+                <li><a href="http://www.twitter.com/" target="_blank"><img alt="트위터" onmouseout="this.src='/web/upload/haetsal/layout/quickR_05.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_05.jpg'" src="/web/upload/haetsal/layout/quickR_05.jpg"/></a></li>
+                <li><a href="http://www.facebook.com/" target="_blank"><img alt="페이스북" onmouseout="this.src='/web/upload/haetsal/layout/quickR_06.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_06.jpg'" src="/web/upload/haetsal/layout/quickR_06.jpg"/></a></li>-->
+                <li><a href="#top"><img alt="GO TOP" onmouseout="this.src='/web/upload/haetsal/layout/quickR_07.jpg'" onmouseover="this.src='/web/upload/haetsal/layout/quickR_on_07.jpg'" src="/web/upload/haetsal/layout/quickR_07.jpg"/></a></li>
+            </ul>
+</div>
+        <div class="xans-element- xans-layout xans-layout-productrecent"><p class="player"><img alt="이전 제품" class="prev" src="/web/upload/haetsal/layout/btn_recent_prev.gif"/></p>
+<ul>
+                <li class="displaynone xans-record-">
+                    <a href="/product/detail.html##param##"><img alt="" src="about:blank"/></a>
+                </li>
+                <li class="displaynone xans-record-">
+                    <a href="/product/detail.html##param##"><img alt="" src="about:blank"/></a>
+                </li>
+            </ul>
+<p class="player"><img alt="다음 제품" class="next" src="/web/upload/haetsal/layout/btn_recent_next.gif"/></p>
+</div>
+    </div>
+</div>
+
+<!-- 참고: 결제를 위한 필수 영역 -->
+<div id="progressPaybar" style="display:none;">
+    <div class="layerProgress" id="progressPaybarBackground"></div>
+    <div id="progressPaybarView">
+        <div class="box">
+            <p class="graph">
+                <span><img alt="현재 결제가 진행중입니다." src="http://img.echosting.cafe24.com/design/skin/default/layout/txt_progress.gif"/></span>
+                <span><img alt="" src="http://img.echosting.cafe24.com/design/skin/default/layout/img_loading.gif"/></span>
+            </p>
+            <p class="txt">
+                본 결제 창은 결제완료 후 자동으로 닫히며,결제 진행 중에 본 결제 창을 닫으시면<br/>
+                주문이 되지 않으니 결제 완료 될 때 까지 닫지 마시기 바랍니다.
+            </p>
+        </div>
+    </div>
+</div>
+<!-- //참고 -->
+    
+<!-- Mirae Log Analysis Script Ver 1.0   -->
+<script TYPE="text/javascript">
+var mi_adkey = "orvim";
+var mi_is_defender = "";
+var mi_date = parseInt(new Date().toISOString().slice(0,13).replace(/-/g,"").replace(/t/gi,"").replace(/:/gi,""))+Math.abs(new Date().getTimezoneOffset()/60) ;
+var mi_script = "<scr"+"ipt "+"type='text/javascr"+"ipt' src='//log1.toup.net/mirae_log.js?t="+mi_date+"' async='true'></scr"+"ipt>"; 
+document.writeln(mi_script);
+</script>
+<!-- Mirae Log Analysis Script END  -->
+    
+<span itemscope="" itemtype="https://schema.org/Organization">
+<link itemprop="url" href="https://bodyshaper.co.kr">
+</span>
+<script type="text/javascript" src="/app/Eclog/js/cid.generate.js?vs=3d0b473968a0ec4ec41e3bf59df3aa51&u=squeem.1"></script>
+<script type="text/javascript" src="/app/Manage/js/inflowbeacon.js?vs=3d0b473968a0ec4ec41e3bf59df3aa51&u=squeem.1"></script>
+<script>        (function (i, s, o, g) {
+            var a = s.createElement(o), m = s.getElementsByTagName(o)[0];
+            var initialized = false;
+            var interval = null;
+
+            function safeInit() {
+              if (initialized) return;
+              if (typeof i.initCaWebAnalytics === 'function') {
+                try {
+                  i.initCaWebAnalytics({"mid":"squeem","stype":"e","domain":"","shop_no":1,"lang":"ko_KR","mobile_flag":"F","send_endpoint":"https://ca-log.cafe24data.com","path_role":"BOARD_PRODUCT_LIST"});
+                  initialized = true;
+                } finally {
+                  if (interval) clearInterval(interval);
+                  a.onload = a.onreadystatechange = a.onerror = null;
+                }
+              }
+            }
+
+            a.onload = a.onreadystatechange = function () {
+              if (!a.readyState || a.readyState === 'loaded' || a.readyState === 'complete') {
+                safeInit();
+              }
+            };
+
+            a.onerror = function () {
+              if (interval) { clearInterval(interval); interval = null; }
+              a.onload = a.onreadystatechange = a.onerror = null;
+            };
+
+            interval = setInterval(safeInit, 200);
+            setTimeout(function () {
+              if (interval) { clearInterval(interval); interval = null; }
+            }, 10000);
+
+            safeInit();
+
+            a.async = 1;
+            a.setAttribute('crossorigin', 'anonymous');
+            a.src = g;
+            m.parentNode.insertBefore(a, m);
+        })(window, document, 'script', "//optimizer.poxo.com/ca2/analytics.js?v=20260916");</script>
+
+                <script>
+                try {
+                    // Account ID 적용
+                    if (!wcs_add) var wcs_add = {};
+                    wcs_add["wa"] = "s_502848a4a6b3";
+            
+                    // 네이버 페이 White list가 있을 경우
+                    wcs.checkoutWhitelist = ["squeem.cafe24.com", "www.squeem.cafe24.com", "m.squeem.cafe24.com", "bodyshaper.kr", "www.bodyshaper.kr", "m.bodyshaper.kr", "bodyshaper.co.kr", "www.bodyshaper.co.kr", "m.bodyshaper.co.kr"];
+                
+                    // 레퍼러 
+                    wcs.setReferer("");
+
+                    // 유입 추적 함수 호출
+                    wcs.inflow("bodyshaper.co.kr");
+
+                    // 로그수집
+                    wcs_do();
+                } catch (e) {};
+                </script>
+            
+<script type="text/javascript" src="//t1.kakaocdn.net/kakao_js_sdk/v1/kakao.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="/ind-script/i18n.php?v=2609161505&lang=ko_KR&domain=front&type=" charset="utf-8"></script>
+
+<script src="/ind-script/optimizer.php?filename=vVjbcts2EH23-NrvoD1NO3215brNxJ5obGfyvASXFEwAi-Jimfn6Lik5sS6UCDrtaEaiiD27wOLsBagcaFyRa3KHnqITmD_5XF78YbIn_0u1PxqlBdHkT_9EdO3m59fs9-x8lDy-BHQGlN-8yARRI3EaNjqVMMkMRVaZRIAhQaZSUoQE4EX2gT8Jhng0kOu9YB3VjNrajRICBqkx16TRhBzFXf_wVYbl47drCJBpaU6ilSxYFh_5eUjWWydNqAZVkYid4Rtyek4mOFIK3ZD0QkV_ae2Vk2U9aDEGqYbGKkf9as88KZYjcxbInilp8KwAY4Ytr4GCtCZzXOYFDLPdMLGsw3BKYy8dUFvFfnwrCtbmd1RIhfn9G9R6BntrHJDWVEZ-5VfSjlFeRSM6p-QsV0YmqN6h0FjcnkEmSv5lzdO3QAXfWkVQjhDVMUBn43Ph0T1vu3UAYkm1lVQnyFBiBVGFbmlegwtX33mQnj6KWvag_z9xlRyCxrN__DQ8gpemnobVGKDsUsYOUx6WZLc25KZ3-CdogPKm-17IF1T70XwEPO_5_-UA_QcA11jEeqSsR3BiOYJZAaqqfc2QJx1mVawlh_kzKMl-IvfquO8vMn4AP1FZtx-m9PtKWYNlQuDP1rtEZfE_mvMSTKlGhl-CWk4YknfsJ2vl5BLe6QhFAjibNjSUpH5YO03LOasyJbj8Q_Zbdp5XXFOsFE0SVF2cm53pHImYhz5iugFOyn1-flU0UsE9VujQCJxH1_22CyfFXjK4InDlFprfZkX3dmze4PJak2tvpQ8p2luKIRZJE4pCpIgXTIEmBeDQkktahOoWrfu6vVfNwUC9Xc1XyFOqx3Bms2W5Z5_P7O7GjUKJzb9ZxQ0ghGlW3wc-1i8ug2Y6Bxkk-iGZuWttoE_YjvBt33LMPLcyOKvjAfoewIBvjVh_J0pr1AW6RNBnV6ITJiTCrsA3GKbi7KGoH4VcbFrONOycIpfG9NnecQhBnTrTa45YL1NtfZV-eShdjYAJislLcygwGXTfgxpsueqVk7CPFEDNJ8y352kqZdBgJadR9BbaZHt_OShTyXIZA3Eyk6IHczlbpXKUTzNyQTba1KCInk2j45B6lunOvV4fpB6W0lo-S1yWJWdJnzp5rtANboJ6Ci22FEwIn55Wf8vu9qSdTMsN_hGKd6A_BtRTF3DNRzKpPpqKUjmgQGooFCZbtxCWjhTODnasI0zf7lwEDEDs6IS_Ln8zbma2r7IGxP0q415c7fP-z82Bd7-Sd8NeOGnDKEx3bM0vuybVouiviCrYL3sHoVsZwtr50Ysox00r3sgXHv8X&type=js&k=1fd6c411f4ae57972148c4584d6dc671b12d17a9&t=1789444199" ></script><script src="/ind-script/optimizer_user.php?filename=K05J5U5JLc5Mz9Mvzs7MMzTSz0mszC8t0U9KLM5M1s8qhjB4sopFizGUAmWT83Nz8_NwSufmp5TmpMLMTE4sSU3PL6rErhzd4uLyzILUIqBaAA&type=js&k=f0ca90faaca649cfc740637dcf7f85a722342b48&t=1529639118&user=T" ></script>
+<script type="text/javascript">
+var sIsFrontDesignChangeRequired = 'F';
+var sYtshopping = 'F';
+var sIsYoutubeShops = 'F';
+var sIsValidChRef = 'F';
+var sChRef = '';
+var sIsDropshipping = 'F';
+if (sIsValidChRef === 'T') {
+sessionStorage.setItem('ch_ref', sChRef);
+}
+// ch_ref 존재 여부 체크
+CAFE24.hasChRef = function() {
+if (sIsValidChRef === 'T' && sessionStorage.getItem('ch_ref')) {
+return true;
+}
+return false;
+}
+// ch_ref 데이터 조회
+CAFE24.getChRefData = function() {
+if (sIsValidChRef === 'T') {
+return sessionStorage.getItem('ch_ref');
+}
+}
+// 프론트 디자인 변경이 필요한지 여부 반환
+CAFE24.checkChannelUI = function() {
+// [ECHOSTING-598429] 드롭쉬핑은 항상 전체 UI 노출
+if (sIsDropshipping === 'T') {
+return false;
+}
+if ((sIsFrontDesignChangeRequired === 'T' && sessionStorage.getItem('ch_ref')) || sIsYoutubeShops === 'T') {
+return true;
+} else {
+return false;
+}
+}
+// 파라미터에 ch_ref 추가
+CAFE24.attachChRef = function(sUrl) {
+if (sUrl) {
+var sChRef = CAFE24.getChRefData();
+if (sChRef) {
+var sSeparator = (sUrl.includes('?')) ? '&' : '?';
+sUrl += sSeparator + 'ch_ref=' + sChRef;
+}
+}
+return sUrl;
+}
+var sIsCheckout = 'F';
+var sCheckoutToken = '';
+if (sIsCheckout === 'T') {
+sessionStorage.setItem('checkoutToken', sCheckoutToken);
+} else {
+sessionStorage.removeItem('checkoutToken');
+}
+CAFE24.getCheckoutToken = function() {
+if (sIsCheckout === 'T') {
+return sessionStorage.getItem('checkoutToken');
+}
+}
+CAFE24.attachCheckoutParam = function(sUrl) {
+if (sUrl) {
+var sCheckoutToken = CAFE24.getCheckoutToken();
+if (sCheckoutToken) {
+var sSeparator = (sUrl.includes('?')) ? '&' : '?';
+sUrl += sSeparator + 'checkoutToken=' + sCheckoutToken;
+}
+}
+return sUrl;
+}
+CAFE24.MOBILE_WEB = false; var mobileWeb = CAFE24.MOBILE_WEB;
+try {
+var isUseLoginKeepingSubmit = false;
+// isSeqNoKeyExpiretime
+function isSeqNoKeyExpiretime(iExpiretime)
+{
+var sDate = new Date();
+var iNow = Math.floor(sDate.getTime() / 1000);
+// 유효시간 확인
+if (iExpiretime > iNow) {
+return false;
+}
+return true;
+}
+function isUseLoginKeeping()
+{
+// 디바이스 확인
+if (EC_MOBILE_DEVICE === false) {
+return;
+}
+// 로그인 여부
+var isLogin = document.cookie.match(/(?:^| |;)iscache=F/) ? true : false
+if (isLogin) {
+return;
+}
+var sLoginKeepingInfo = localStorage.getItem('use_login_keeping_info');
+var iSeqnoExpiretime;
+var iSeqNoKey;
+if (sLoginKeepingInfo == null) {
+iSeqnoExpiretime = localStorage.getItem('seq_no_key_expiretime');
+iSeqNoKey = localStorage.getItem('seq_no_key');
+// 유효시간, key 값 확인
+if (iSeqnoExpiretime === null || iSeqNoKey === null) {
+return;
+}
+} else {
+var oLoginKeepingInfo = JSON.parse(sLoginKeepingInfo);
+iSeqNoKey = oLoginKeepingInfo.seq_no_key;
+iSeqnoExpiretime = oLoginKeepingInfo.seq_no_key_expiretime;
+if (isNaN(iSeqNoKey) === true || isNaN(iSeqnoExpiretime) === true) {
+return;
+}
+}
+if (isSeqNoKeyExpiretime(iSeqnoExpiretime) === false) {
+return;
+}
+useLoginKeepingSubmit();
+}
+function findGetParamValue(paramKey)
+{
+var result = null,
+tmp = [];
+location.search.substr(1).split('&').forEach(function (item) {
+tmp = item.split('=');
+if (tmp[0] === paramKey) result = decodeURIComponent(tmp[1]);
+});
+return result;
+}
+function useLoginKeepingSubmit()
+{
+var iSeqnoExpiretime;
+var iSeqNoKey;
+var sUseLoginKeepingIp;
+var sLoginKeepingInfo = localStorage.getItem('use_login_keeping_info');
+if (sLoginKeepingInfo == null) {
+iSeqnoExpiretime = localStorage.getItem('seq_no_key_expiretime');
+iSeqNoKey = localStorage.getItem('seq_no_key');
+} else {
+var oLoginKeepingInfo = JSON.parse(sLoginKeepingInfo);
+iSeqNoKey = oLoginKeepingInfo.seq_no_key;
+iSeqnoExpiretime = oLoginKeepingInfo.seq_no_key_expiretime;
+sUseLoginKeepingIp = oLoginKeepingInfo.use_login_keeping_ip;
+}
+var oForm = document.createElement('form');
+oForm.method = 'post';
+oForm.action = '/exec/front/member/LoginKeeping';
+document.body.appendChild(oForm);
+var oSeqNoObj = document.createElement('input');
+oSeqNoObj.name = 'seq_no_key';
+oSeqNoObj.type = 'hidden';
+oSeqNoObj.value = iSeqNoKey;
+oForm.appendChild(oSeqNoObj);
+oSeqNoObj = document.createElement('input');
+oSeqNoObj.name = 'seq_no_key_expiretime';
+oSeqNoObj.type = 'hidden';
+oSeqNoObj.value = iSeqnoExpiretime;
+oForm.appendChild(oSeqNoObj);
+var returnUrl = findGetParamValue('returnUrl');
+if (returnUrl == '' || returnUrl == null) {
+returnUrl = location.pathname + location.search;
+}
+oSeqNoObj = document.createElement('input');
+oSeqNoObj.name = 'returnUrl';
+oSeqNoObj.type = 'hidden';
+oSeqNoObj.value = returnUrl;
+oForm.appendChild(oSeqNoObj);
+if (sUseLoginKeepingIp != undefined) {
+oSeqNoObj = document.createElement('input');
+oSeqNoObj.name = 'use_login_keeping_ip';
+oSeqNoObj.type = 'hidden';
+oSeqNoObj.value = sUseLoginKeepingIp;
+oForm.appendChild(oSeqNoObj);
+}
+oForm.submit();
+isUseLoginKeepingSubmit = true;
+}
+isUseLoginKeeping();
+} catch(e) {
+}
+var bUseElastic = false;
+var sSearchBannerUseFlag = 'F';
+var bIsUseSpread = false;
+var sIsSecret = false;
+var iBoardNo = "6";
+var aLogData = {"log_server1":"eclog2-181.cafe24.com","log_server2":"eclog2-181.cafe24.com","mid":"squeem","stype":"e","domain":"","shop_no":1,"lang":"ko_KR","ver":2,"hash":"","ca":"cfa-js.cafe24.com\/cfa.js","etc":"","mobile_flag":"F"};
+var sMileageName = '적립금';
+var sMileageUnit = '[:PRICE:]원';
+var sDepositName = '예치금';
+var sDepositUnit = '원';
+CAFE24.SHOP_CURRENCY_INFO = {"1":{"aShopCurrencyInfo":{"currency_code":"KRW","currency_no":"410","currency_symbol":"\uffe6","currency_name":"South Korean won","currency_desc":"\uffe6 \uc6d0 (\ud55c\uad6d)","decimal_place":0,"round_method_type":"F"},"aShopSubCurrencyInfo":null,"aBaseCurrencyInfo":{"currency_code":"KRW","currency_no":"410","currency_symbol":"\uffe6","currency_name":"South Korean won","currency_desc":"\uffe6 \uc6d0 (\ud55c\uad6d)","decimal_place":0,"round_method_type":"F"},"fExchangeRate":1,"fExchangeSubRate":null,"aFrontCurrencyFormat":{"head":"","tail":"\uc6d0"},"aFrontSubCurrencyFormat":{"head":"","tail":""},"bPresentmentEnabled":false,"aPresentmentCurrencyInfo":null,"fExchangePresentmentRate":null,"aFrontPresentmentCurrencyFormat":null,"bGlobaleEnabled":false}}; var SHOP_CURRENCY_INFO = CAFE24.SHOP_CURRENCY_INFO;
+CAFE24.APPSCRIPT_ASSIGN_DATA = CAFE24.APPSCRIPT_ASSIGN_DATA || [{'src':'https://calendar-app.cafe24.com/openapi/inject.js?vs=20260723132906.1&client_id=A8RQp67UIt9nBlqvThz2jC'}];
+CAFE24.APPSCRIPT_SDK_DATA = CAFE24.APPSCRIPT_SDK_DATA || ['store','supply','application','order','product','shipping','category','collection','community','customer','design','notification','promotion'];
+var EC_APPSCRIPT_ASSIGN_DATA = CAFE24.getDeprecatedNamespace('EC_APPSCRIPT_ASSIGN_DATA');
+var EC_APPSCRIPT_SDK_DATA = CAFE24.getDeprecatedNamespace('EC_APPSCRIPT_SDK_DATA');
+</script></body>
+</html>
