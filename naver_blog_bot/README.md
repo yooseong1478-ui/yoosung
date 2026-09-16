@@ -89,7 +89,23 @@ CI 서버라면 `ANTHROPIC_API_KEY` 환경변수로도 인증됩니다.
 - 내용은 제품 페이지 사실만 사용하고, 없는 정보는 `[확인 필요: 항목]` 으로 남김
 - 참고 글 문장 복사 금지, 의료적 효능 단정 금지, 마지막에 개인 후기 고지 문장
 
-## 발행 단계 연결
+## 발행 (publish_post.py)
 
-`output/*.json` 을 읽어 네이버 블로그 발행(Playwright 자동화 또는 네이버 블로그 API)에 넘기면 됩니다.
-발행 파트는 이 저장소에 아직 없습니다.
+```bash
+pip install playwright && python3 -m playwright install chromium   # 최초 1회
+python3 publish_post.py output/남자보정속옷_20260916_agent.json            # 에디터에 입력만 하고 발행 전 대기
+python3 publish_post.py output/남자보정속옷_20260916_agent.json --publish  # 태그 입력 후 발행까지
+./run_all.sh [--publish]                                                 # 수집+작성+입력(+발행) 한 번에
+```
+
+- 첫 실행 때 브라우저 창에서 네이버에 직접 로그인하면 `.browser_profile/` 에 세션이 남아 다음부터는 자동입니다.
+- 기본값은 발행 전 멈춤이라 글을 눈으로 검토한 뒤 직접 발행 버튼을 누를 수 있습니다.
+- `[사진: 설명]` 줄은 그대로 들어가므로 발행 전에 실제 사진으로 바꾸세요.
+- 네이버 에디터 셀렉터는 `publish_post.py` 의 `SELECTORS` 에 모여 있어 마크업이 바뀌면 그 부분만 고치면 됩니다.
+- 자동발행은 네이버 이용약관상 제재 대상이 될 수 있으니 계정 보호를 위해 하루 발행 수를 낮게 유지하세요.
+
+## 이 환경(Claude Code 웹)에서 바로 돌리려면
+
+claude.ai/code 의 환경 설정에서 네트워크 정책을 "제한 없음"으로 바꾸거나 허용 도메인에
+`naver.com`, `*.naver.com`, `bodyshaper.co.kr` 을 추가한 새 환경을 만든 뒤 세션을 열면
+`python3 run_agent.py` 를 세션 안에서 실행할 수 있습니다.

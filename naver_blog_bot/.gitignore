@@ -2,3 +2,5 @@ config.json
 sources/
 output/
 __pycache__/
+.browser_profile/
+node_modules/
