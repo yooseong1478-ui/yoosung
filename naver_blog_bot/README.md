@@ -105,6 +105,8 @@ python3 publish_post.py output/남자보정속옷_20260916_agent.json --publish 
 - 자동발행은 네이버 이용약관상 제재 대상이 될 수 있으니 계정 보호를 위해 하루 발행 수를 낮게 유지하세요.
 
 ### 로컬 한 줄 실행
+윈도우는 `publish_local.bat` 을 더블클릭하면 됩니다 (발행까지 하려면 명령창에서 `publish_local.bat --publish`).
+
 ```bash
 ./publish_local.sh samples/남자보정속옷_뉴슬림엑스.md            # 로그인 → 입력 → 검토 대기
 ./publish_local.sh samples/남자보정속옷_뉴슬림엑스.md --publish  # 로그인 → 입력 → 발행
