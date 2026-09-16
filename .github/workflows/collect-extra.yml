@@ -1,0 +1,25 @@
+name: collect-product-extra
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-kor >/dev/null
+      - run: pip install -r naver_blog_bot/requirements.txt
+      - name: Collect product detail images (OCR), reviews and Q&A
+        working-directory: naver_blog_bot
+        run: python3 collect_ci_extra.py 남자보정속옷
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase -q origin ${GITHUB_REF_NAME}
+          git add naver_blog_bot/collected
+          git commit -m "chore: collect product extra sources [skip ci]" || echo "nothing to commit"
+          git push
