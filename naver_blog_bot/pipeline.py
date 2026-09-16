@@ -103,14 +103,20 @@ def measure(post_md):
     return {"title_len": len(title), "chars": chars, "photos": photos, "max_gap": max(segs) if segs else 0, "title": title}
 
 
-def step_write(work, keyword, cfg, feedback=""):
+def step_write(work, keyword, cfg, product_url="", feedback="", prev=""):
+    fixed = (f"검색 키워드: {keyword}\n"
+             f"- 제목 맨 앞과 첫 문단에는 반드시 이 검색 키워드(띄어쓰기는 허용: '{keyword}' 또는 '{keyword.replace('보정속옷', ' 보정속옷')}')를 넣습니다. "
+             f"research.md 의 선택 키워드·롱테일 문구는 보조 키워드로 본문에 3~5회 씁니다.\n"
+             + (f"- 구매처는 반드시 이 주소로 안내합니다: {product_url}\n" if product_url else ""))
+    redo = ""
+    if feedback:
+        redo = (f"=== 팀장 재작업 요청 ===\n{feedback}\n아래 '이전 원고'를 바탕으로 문제만 고치세요. 잘 된 부분은 유지하고, "
+                f"분량을 늘려야 하면 새 소제목이나 체험 문단을 추가하세요(줄이지 마세요).\n=== 이전 원고 ===\n{prev}\n")
     prompt = (f"{read(TEAM / '04_writer.md')}\n\n=== 스타일 가이드 ===\n{read(TEAM / '01_style_guide.md')}\n\n"
               f"=== SEO 규칙 ===\n{read(TEAM / '02_seo_rules.md')}\n\n=== research.md ===\n{read(work / 'research.md')}\n\n"
-              f"검색 키워드: {keyword}\n{('=== 팀장 재작업 요청 ===' + chr(10) + feedback) if feedback else ''}\n"
-              "post.md 내용만 출력하세요 (설명, 코드펜스 없이).")
+              f"{fixed}\n{redo}\npost.md 내용만 출력하세요 (설명, 코드펜스 없이).")
     out = claude_p(prompt, cfg.get("claude_model", "")).strip()
     out = re.sub(r"^```\w*\n|\n```$", "", out)
-    (work / "post.md").write_text(out, encoding="utf-8")
     m = measure(out)
     report("2단계 글쓰기", f"제목 {m['title_len']}자, 본문 {m['chars']}자, 사진 {m['photos']}곳, 최대 사진 간격 {m['max_gap']}자")
     return out, m
@@ -120,8 +126,10 @@ def lead_review_post(m):
     issues = []
     if not 25 <= m["title_len"] <= 60:
         issues.append(f"제목 {m['title_len']}자 → 33~51자로")
-    if not 1100 <= m["chars"] <= 2100:
-        issues.append(f"본문 {m['chars']}자 → 1,200~1,900자로")
+    if m["chars"] < 1150:
+        issues.append(f"본문이 공백 제외 {m['chars']}자로 짧음 → 최소 {1300 - m['chars']}자 이상 추가해 1,300~1,900자로 (STEP 하나 추가 또는 각 STEP 에 체험 문단 2~3줄 추가)")
+    elif m["chars"] > 2100:
+        issues.append(f"본문 {m['chars']}자 → 1,300~1,900자로 줄이기")
     if m["photos"] < 14:
         issues.append(f"사진 자리 {m['photos']}곳 → 17곳 이상으로")
     if m["max_gap"] > 320:
@@ -214,14 +222,21 @@ def main():
     if "research" in steps:
         step_research(work, keyword, product_url, memo, cfg, args.browser)
     if "write" in steps:
-        _, m = step_write(work, keyword, cfg)
+        best, best_issues = None, None
+        out, m = step_write(work, keyword, cfg, product_url)
         issues = lead_review_post(m)
-        if issues:
-            print(f"[팀장] 글쓰기 재작업 요청: {'; '.join(issues)}", file=sys.stderr)
-            _, m = step_write(work, keyword, cfg, feedback="\n".join(issues))
-            left = lead_review_post(m)
-            if left:
-                print(f"[팀장] 재작업 후에도 남은 문제 (사람 확인 필요): {'; '.join(left)}", file=sys.stderr)
+        best, best_issues = out, issues
+        for attempt in range(2):
+            if not issues:
+                break
+            print(f"[팀장] 글쓰기 재작업 요청 {attempt + 1}: {'; '.join(issues)}", file=sys.stderr)
+            out, m = step_write(work, keyword, cfg, product_url, feedback="\n".join(issues), prev=out)
+            issues = lead_review_post(m)
+            if len(issues) < len(best_issues):
+                best, best_issues = out, issues
+        (work / "post.md").write_text(best, encoding="utf-8")
+        if best_issues:
+            print(f"[팀장] 재작업 후에도 남은 문제 (사람 확인 필요): {'; '.join(best_issues)}", file=sys.stderr)
     if "image" in steps:
         step_images(work, keyword, cfg)
     if "assemble" in steps:
