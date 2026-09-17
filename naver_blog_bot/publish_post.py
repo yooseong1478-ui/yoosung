@@ -74,8 +74,13 @@ def type_paragraphs(page, paragraphs, frame=None, images_dir: Path | None = None
             para = f"(이미지 넣기: {m.group(1)})"
         elif para and para.strip().startswith("[[PHOTO:"):
             para = "(사진 넣기: " + para.strip()[8:-2] + ")"
+        heading = bool(para) and bool(re.match(r"^(📌|STEP ?\d|☑️ 이런|■|▶|\d+\.\s)", para.strip()))
+        if heading:                      # 소제목은 굵게 (진짜 블로거처럼 보이도록)
+            page.keyboard.press("Control+b")
         if para:
             page.keyboard.insert_text(para)
+        if heading:
+            page.keyboard.press("Control+b")
         page.keyboard.press("Enter")
         time.sleep(0.05)
 
