@@ -42,6 +42,28 @@
       <p style="font-size:13px;color:var(--muted);margin:0">버튼을 누르면 로그인 창이 뜹니다. 로그인하면 창이 자동으로 닫히고 세션이 이 PC에 저장됩니다.</p>
       <button onclick="post('/api/login')">네이버 로그인 창 열기</button>
       <button class="secondary" onclick="post('/api/check_login')">상태 다시 확인</button>
+      <div id="cloudLogin" style="display:none">
+        <p style="font-size:13px;color:var(--muted);margin:12px 0 0">클라우드에서 실행 중이라 로그인 창이 원격 화면에 뜹니다. 위 버튼을 누른 뒤 아래 버튼으로 화면을 열어 로그인하세요.</p>
+        <button class="ok" onclick="window.open(novnc,'_blank')">로그인 화면 보기 (새 탭)</button>
+        <div id="novncBox" style="margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:360px;display:none">
+          <iframe id="novncFrame" style="width:100%;height:100%;border:0"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">1</span> Claude 연결 <span id="claudeBadge" class="badge">확인 중</span></h2>
+      <p style="font-size:13px;color:var(--muted);margin:0">글쓰기 단계가 Claude 구독으로 동작합니다. 시작 → 링크 열어 승인 → 나온 코드를 붙여넣기.</p>
+      <button onclick="post('/api/claude/login')">Claude 로그인 시작</button>
+      <button class="secondary" onclick="post('/api/claude/check')">상태 다시 확인</button>
+      <div id="claudeFlow" style="display:none;margin-top:10px">
+        <a id="claudeLink" href="#" target="_blank" style="font-size:14px">1) 이 링크를 열어 로그인하고 승인하기</a>
+        <label>2) 화면에 나온 코드 붙여넣기</label>
+        <input id="claudeCode" placeholder="코드">
+        <button onclick="submitClaudeCode()">코드 제출</button>
+        <button class="secondary" onclick="post('/api/claude/cancel')">취소</button>
+      </div>
+      <div id="claudeMsg" style="font-size:13px;color:var(--warn);margin-top:8px"></div>
     </div>
 
     <div class="card">
@@ -104,11 +126,36 @@ function renderPreview(f){
   body=body.replace(/\[\[PHOTO:([^\]]+)\]\]/g,(m,d)=>`<div class="ph">📷 직접 찍을 사진: ${d}</div>`);
   document.getElementById('preview').innerHTML=`<b style="font-size:18px">${esc(f.title)}</b>\n\n${body}\n\n<span style="color:#2563eb">${esc(f.hashtags||'')}</span>`;
 }
-let lastFinal='';
+let lastFinal='', novnc='', novncShown=false;
+async function submitClaudeCode(){
+  const code=document.getElementById('claudeCode').value.trim();
+  if(!code){alert('코드를 붙여넣으세요');return;}
+  await post('/api/claude/code',{code});
+}
+function renderClaude(s){
+  const b=document.getElementById('claudeBadge');
+  if(s.claude_logged_in===null){b.textContent='확인 중';b.className='badge';}
+  else if(s.claude_logged_in){b.textContent='연결됨';b.className='badge on';}
+  else{b.textContent='로그인 필요';b.className='badge';}
+  const flow=document.getElementById('claudeFlow');
+  const st=s.claude_login_state;
+  flow.style.display=(st==='waiting_code'||st==='verifying')?'block':'none';
+  if(s.claude_login_url){const a=document.getElementById('claudeLink'); a.href=s.claude_login_url;}
+  document.getElementById('claudeMsg').textContent = st==='starting'?'로그인 링크를 준비하는 중...':(st==='verifying'?'코드 확인 중...':(s.claude_login_msg||''));
+}
 async function tick(){
   try{
     const s=await (await fetch('/api/status')).json();
     document.getElementById('busy').textContent = s.busy?('작업 중: '+s.busy):'';
+    if(s.cloud){
+      novnc=s.novnc_url||'';
+      document.getElementById('cloudLogin').style.display='block';
+      if(novnc && !novncShown && s.busy==='login'){
+        novncShown=true; const box=document.getElementById('novncBox'); box.style.display='block';
+        document.getElementById('novncFrame').src=novnc;
+      }
+    }
+    renderClaude(s);
     const b=document.getElementById('loginBadge');
     if(s.logged_in===null){b.textContent='확인 중';b.className='badge';}
     else if(s.logged_in){b.textContent='로그인됨 '+(s.login_id||'');b.className='badge on';}

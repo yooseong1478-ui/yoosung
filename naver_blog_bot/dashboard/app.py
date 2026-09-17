@@ -30,14 +30,26 @@ PROFILE = BOT / ".browser_profile"
 WORK = BOT / "work"
 WORK.mkdir(exist_ok=True)
 PY = sys.executable
+CLOUD = os.environ.get("NAVER_BOT_CLOUD") == "1" or os.environ.get("CODESPACES") == "true"
+
+
+def novnc_url():
+    """Codespaces 에서 noVNC(원격 화면) 주소. 로컬이면 빈 문자열."""
+    name, domain = os.environ.get("CODESPACE_NAME"), os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")
+    if name and domain:
+        return f"https://{name}-6080.{domain}/?autoconnect=1&resize=remote&password=vscode"
+    return "http://127.0.0.1:6080/?autoconnect=1&resize=remote&password=vscode" if CLOUD else ""
+
 
 app = FastAPI(title="Naver Blog Bot Dashboard")
 app.mount("/work", StaticFiles(directory=str(WORK)), name="work")
 
 LOG = deque(maxlen=400)
 STATE = {"busy": "", "logged_in": None, "login_id": "", "keyword": "", "work": "", "candidates": [], "final": None,
-         "last_publish": ""}
+         "last_publish": "", "cloud": CLOUD, "novnc_url": novnc_url(),
+         "claude_logged_in": None, "claude_login_state": "idle", "claude_login_url": "", "claude_login_msg": ""}
 LOCK = threading.Lock()
+CLAUDE = {"proc": None, "master": None, "buf": ""}
 
 
 def log(msg):
@@ -89,7 +101,11 @@ def check_login():
 def do_login():
     """창을 띄워 사용자가 직접 로그인하게 하고, 로그인되면 닫는다 (세션은 .browser_profile 에 저장)."""
     from playwright.sync_api import sync_playwright
-    log("로그인 창을 엽니다. 창에서 네이버 로그인을 완료해 주세요 (최대 10분).")
+    if CLOUD:
+        log("로그인 창을 원격 화면에 띄웠습니다. '로그인 화면 보기' 버튼으로 화면을 열어 네이버 로그인을 완료해 주세요 (최대 10분).")
+        log("해외 IP 접속이라 '새로운 기기 로그인' 인증(문자/이메일)이 뜰 수 있습니다. 그 화면에서 그대로 진행하면 됩니다.")
+    else:
+        log("로그인 창을 엽니다. 창에서 네이버 로그인을 완료해 주세요 (최대 10분).")
     with sync_playwright() as pw:
         ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=False, viewport={"width": 1100, "height": 800})
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
@@ -105,6 +121,97 @@ def do_login():
         page.wait_for_timeout(2000)
         ctx.close()
     check_login()
+
+
+# ------------------------------------------------------------------ Claude 로그인 (구독 OAuth, claude CLI)
+ANSI_RE = re.compile(r"\x1b\]8;;[^\x07]*\x07|\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07|\x07")
+
+
+def check_claude():
+    try:
+        r = subprocess.run(["claude", "auth", "status", "--json"], capture_output=True, text=True, timeout=30)
+        ok = bool(json.loads(r.stdout or "{}").get("loggedIn"))
+    except Exception as e:  # noqa: BLE001
+        log(f"Claude 상태 확인 실패: {e}")
+        ok = False
+    STATE["claude_logged_in"] = ok
+    if ok:
+        STATE["claude_login_state"] = "done"
+    log("Claude 로그인 상태: " + ("로그인됨" if ok else "로그인 필요"))
+    return ok
+
+
+def _claude_reader():
+    """pty 출력을 읽어 로그인 URL 과 완료 여부를 상태에 반영한다."""
+    import select
+    master, proc = CLAUDE["master"], CLAUDE["proc"]
+    while proc.poll() is None:
+        r, _, _ = select.select([master], [], [], 1)
+        if not r:
+            continue
+        try:
+            chunk = os.read(master, 4096)
+        except OSError:
+            break
+        if not chunk:
+            break
+        CLAUDE["buf"] += ANSI_RE.sub("", chunk.decode("utf-8", "ignore"))
+        txt = CLAUDE["buf"]
+        if not STATE["claude_login_url"]:
+            m = re.search(r"https://claude\.(?:com|ai)/\S*oauth\S*", txt)
+            if m:
+                STATE["claude_login_url"] = m.group(0).rstrip(".,)")
+                STATE["claude_login_state"] = "waiting_code"
+                log("Claude 로그인 링크가 준비됐습니다. 링크를 열어 승인한 뒤 나오는 코드를 붙여넣으세요.")
+        if re.search(r"(?i)logged in|login successful|successfully", txt):
+            break
+    time.sleep(1)
+    tail = CLAUDE["buf"][-300:].strip()
+    try:
+        os.close(master)
+    except OSError:
+        pass
+    CLAUDE["proc"] = None
+    if check_claude():
+        STATE["claude_login_msg"] = "Claude 로그인 완료"
+    else:
+        STATE["claude_login_state"] = "error"
+        STATE["claude_login_msg"] = tail or "로그인이 완료되지 않았습니다. 다시 시작하세요."
+        log(f"Claude 로그인 실패: {tail[-160:]}")
+
+
+def start_claude_login():
+    import pty
+    if CLAUDE["proc"] is not None:
+        return False
+    STATE.update({"claude_login_state": "starting", "claude_login_url": "", "claude_login_msg": ""})
+    CLAUDE["buf"] = ""
+    master, slave = pty.openpty()
+    env = dict(os.environ, TERM="xterm", BROWSER="true")     # 서버에서 브라우저를 열지 않도록
+    CLAUDE["proc"] = subprocess.Popen(["claude", "auth", "login", "--claudeai"], stdin=slave, stdout=slave, stderr=slave,
+                                      env=env, close_fds=True)
+    os.close(slave)
+    CLAUDE["master"] = master
+    threading.Thread(target=_claude_reader, daemon=True).start()
+    log("Claude 로그인을 시작합니다...")
+    return True
+
+
+def submit_claude_code(code):
+    if CLAUDE["proc"] is None or CLAUDE["master"] is None:
+        return False
+    os.write(CLAUDE["master"], (code.strip() + "\r").encode())
+    STATE["claude_login_state"] = "verifying"
+    log("코드를 전달했습니다. 확인 중...")
+    return True
+
+
+def cancel_claude_login():
+    p = CLAUDE["proc"]
+    if p is not None and p.poll() is None:
+        p.kill()
+    STATE["claude_login_state"] = "idle"
+    STATE["claude_login_url"] = ""
 
 
 # ------------------------------------------------------------------ 글감 수집
@@ -202,7 +309,7 @@ def do_publish(mode):
         log("먼저 글을 만드세요.")
         return
     flag = "--draft" if mode == "draft" else "--publish"
-    log(("임시저장" if mode == "draft" else "발행") + " 시작 (브라우저 창이 뜹니다)...")
+    log(("임시저장" if mode == "draft" else "발행") + " 시작 (브라우저 창이 뜹니다" + (", 원격 화면에서 볼 수 있습니다" if CLOUD else "") + ")...")
     r = subprocess.run([PY, str(BOT / "publish_post.py"), str(work / "final.json"), flag, "--shot-dir", str(work / "shots")],
                        capture_output=True, text=True, encoding="utf-8", cwd=BOT)
     for line in ((r.stderr or "") + (r.stdout or "")).splitlines():
@@ -239,6 +346,32 @@ def login():
 @app.post("/api/check_login")
 def check():
     return {"started": run_bg("check", check_login)}
+
+
+class CodeReq(BaseModel):
+    code: str
+
+
+@app.post("/api/claude/check")
+def claude_check():
+    threading.Thread(target=check_claude, daemon=True).start()
+    return {"started": True}
+
+
+@app.post("/api/claude/login")
+def claude_login():
+    return {"started": start_claude_login()}
+
+
+@app.post("/api/claude/code")
+def claude_code(req: CodeReq):
+    return {"ok": submit_claude_code(req.code)}
+
+
+@app.post("/api/claude/cancel")
+def claude_cancel():
+    cancel_claude_login()
+    return {"ok": True}
 
 
 @app.post("/api/research")
@@ -291,5 +424,7 @@ def load_sample(name: str):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", "8787"))
-    threading.Timer(1.5, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
+    if not CLOUD:
+        threading.Timer(1.5, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
+    threading.Thread(target=check_claude, daemon=True).start()
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")

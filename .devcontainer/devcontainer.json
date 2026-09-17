@@ -1,0 +1,26 @@
+{
+  "name": "naver-blog-bot",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "lts" },
+    "ghcr.io/devcontainers/features/desktop-lite:1": { "password": "vscode", "webPort": "6080", "vncPort": "5901" }
+  },
+  "hostRequirements": { "cpus": 2, "memory": "4gb", "storage": "32gb" },
+  "containerEnv": {
+    "DISPLAY": ":1",
+    "PORT": "8787",
+    "NAVER_BOT_CLOUD": "1",
+    "PLAYWRIGHT_BROWSERS_PATH": "/home/vscode/pw-browsers"
+  },
+  "forwardPorts": [8787, 6080],
+  "portsAttributes": {
+    "8787": { "label": "대시보드", "onAutoForward": "openBrowser" },
+    "6080": { "label": "네이버 로그인 화면", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "bash naver_blog_bot/codespace_setup.sh",
+  "postStartCommand": "bash naver_blog_bot/start_dashboard_codespace.sh",
+  "customizations": {
+    "codespaces": { "openFiles": [] },
+    "vscode": { "extensions": [] }
+  }
+}
