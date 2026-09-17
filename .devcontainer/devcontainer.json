@@ -14,13 +14,24 @@
   },
   "forwardPorts": [8787, 6080],
   "portsAttributes": {
-    "8787": { "label": "대시보드", "onAutoForward": "openBrowser" },
+    "8787": { "label": "대시보드 (여기를 열면 됩니다)", "onAutoForward": "openPreview" },
     "6080": { "label": "네이버 로그인 화면", "onAutoForward": "silent" }
   },
   "postCreateCommand": "bash naver_blog_bot/codespace_setup.sh",
   "postStartCommand": "bash naver_blog_bot/start_dashboard_codespace.sh",
+  "postAttachCommand": "bash naver_blog_bot/codespace_hint.sh",
   "customizations": {
     "codespaces": { "openFiles": [] },
-    "vscode": { "extensions": [] }
+    "vscode": {
+      "extensions": [],
+      "settings": {
+        "workbench.startupEditor": "none",
+        "workbench.editor.showTabs": "single",
+        "workbench.activityBar.location": "hidden",
+        "workbench.statusBar.visible": true,
+        "explorer.autoReveal": false,
+        "git.autofetch": false
+      }
+    }
   }
 }

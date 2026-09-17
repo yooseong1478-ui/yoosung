@@ -46,7 +46,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>네이버 블로그 자동화 <span id="busy" class="busy"></span></h1>
+  <h1>네이버 블로그 자동화 <span id="busy" class="busy"></span>
+    <a href="#" onclick="window.open(location.href,'_blank');return false;" style="font-size:13px;font-weight:400;color:var(--accent);margin-left:10px">새 창으로 크게 열기</a></h1>
   <p class="sub" id="subtitle">로그인 → 글감 찾기 → 글 쓰기 → 발행. 각 단계는 버튼 한 번이면 됩니다.</p>
 
   <!-- ===== 간단 모드 (클라우드 기본): 네이버 로그인 → 글 올리기 ===== -->
@@ -57,6 +58,7 @@
         <p class="hint" id="loginHint">버튼을 누르면 아래에 로그인 화면이 열립니다. 그 화면에서 네이버 아이디와 비밀번호로 로그인하세요. "새로운 기기" 인증 문자가 오면 거기서 입력하면 됩니다. 한 번만 하면 저장됩니다.</p>
         <button class="naver" id="btnLoginS" onclick="startLogin()">네이버 로그인 하기</button>
         <button class="secondary" onclick="post('/api/check_login')">로그인 됐는지 다시 확인</button>
+        <button class="secondary" onclick="if(novnc) window.open(novnc,'_blank')">로그인 화면이 안 보이면 새 탭으로 열기</button>
         <div id="screenBox" class="screen" style="display:none"><iframe id="screenFrame" title="원격 화면"></iframe></div>
       </div>
 
