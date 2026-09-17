@@ -1,6 +1,29 @@
 # 네이버 블로그 자동화 봇
 
-## 🚀 설치 없이 사이트로 쓰기 (GitHub Codespaces)
+## 🌐 내 사이트로 올려서 쓰기 (GitHub 화면 없이, 로그인은 네이버 1회만)
+
+같은 대시보드를 Docker 가 되는 아무 호스팅에나 올릴 수 있습니다. 페이지 안에 네이버 로그인 화면이 직접 떠서
+클릭·입력으로 로그인하고(원격 데스크톱 없음), 글 목록에서 버튼으로 임시저장/발행합니다.
+
+### Hugging Face Spaces (무료, 카드 없음) — 파일 하나만 붙여넣기
+1. https://huggingface.co 가입 → 오른쪽 위 New → Space
+2. 이름 아무거나, **SDK: Docker**, **Private** 선택 → Create Space
+3. Files 탭 → "Create new file" → 파일 이름 `Dockerfile` → 이 저장소의 `deploy/huggingface/Dockerfile` 내용을 그대로 붙여넣고 Commit
+4. Settings → Variables and secrets → Secret 추가: 이름 `ACCESS_CODE`, 값은 원하는 접속 코드 (사이트 잠금용)
+5. 5~10분 뒤 Space 주소(https://huggingface.co/spaces/아이디/이름)를 열면 접속 코드 입력 → 대시보드
+
+무료 Space 는 48시간 안 쓰면 잠들고 다시 열면 1~2분 뒤 깨어납니다. 잠들면 네이버 로그인만 다시 하면 됩니다.
+
+### Render (Deploy 버튼)
+https://render.com/deploy?repo=https://github.com/yooseong1478-ui/yoosung → Render 가입(GitHub 로그인) → `ACCESS_CODE` 입력 → Deploy.
+무료 플랜은 15분 미사용 시 잠들고 깨어날 때 네이버 로그인을 다시 해야 합니다. 로그인 유지가 중요하면 Hugging Face 를 권합니다.
+
+### 본인 서버
+```bash
+docker build -t naver-blog-bot . && docker run -d -p 7860:7860 -e ACCESS_CODE=원하는코드 -v bot_profile:/app/naver_blog_bot/.browser_profile naver-blog-bot
+```
+
+## 🚀 GitHub Codespaces 로 쓰기
 
 1. 링크 클릭: **https://codespaces.new/yooseong1478-ui/yoosung?quickstart=1** → "Create codespace" → 2~5분 대기.
    편집기 안에 대시보드 창이 자동으로 열립니다. 안 보이면 아래 "포트(PORTS)" 탭 → 8787 줄 → 지구본 아이콘(브라우저에서 열기).

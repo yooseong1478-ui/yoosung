@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: naver-blog-bot
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NAVER_BOT_CLOUD
+        value: "1"
+      - key: ACCESS_CODE
+        sync: false

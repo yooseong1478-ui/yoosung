@@ -1,0 +1,22 @@
+name: docker-check
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (same as Hugging Face / Render deploy)
+        run: docker build -t naver-blog-bot .
+      - name: Run container and verify dashboard
+        run: |
+          docker run -d --name bot -p 7860:7860 -e ACCESS_CODE=test1234 naver-blog-bot
+          for i in $(seq 1 30); do sleep 2; curl -sS -m 3 -o /dev/null http://127.0.0.1:7860/ && break; done
+          echo "locked page:"; curl -sS http://127.0.0.1:7860/ | grep -c "접속 코드"
+          curl -sS -c cj -X POST http://127.0.0.1:7860/api/unlock -H 'Content-Type: application/json' -d '{"code":"test1234"}'
+          curl -sS -b cj http://127.0.0.1:7860/api/status | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['cloud'] is True; print('status ok, logged_in=',d['logged_in'])"
+          curl -sS -b cj http://127.0.0.1:7860/api/posts | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d)>=1; print('posts:',[p['title'][:30] for p in d])"
+          echo "viewer test:"; curl -sS -b cj -X POST "http://127.0.0.1:7860/api/view/start?target=test&url=http://127.0.0.1:7860/"
+          sleep 8; curl -sS -b cj http://127.0.0.1:7860/api/view/frame | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['active'] and len(d['frame'])>1000, d['message']; print('viewer streaming ok, frame bytes', len(d['frame'])*3//4)"
+          curl -sS -b cj -X POST http://127.0.0.1:7860/api/view/stop
+          echo; echo "--- container log"; docker logs bot | tail -20

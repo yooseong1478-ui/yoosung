@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>접속 코드</title>
+<style>body{font-family:Pretendard,-apple-system,"Malgun Gothic",sans-serif;background:#f6f7f9;color:#1f2937;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:28px;width:320px}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #e5e7eb;border-radius:8px;font-size:16px;margin:12px 0}
+button{width:100%;padding:12px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-size:15px;cursor:pointer}
+p{font-size:13px;color:#6b7280;margin:0}</style></head>
+<body><div class="box"><b>접속 코드를 입력하세요</b><p>이 사이트는 네이버 글을 올릴 수 있어 코드로 보호됩니다.</p>
+<input id="c" type="password" placeholder="접속 코드"><button onclick="go()">들어가기</button><p id="m" style="color:#b91c1c;margin-top:8px"></p></div>
+<script>async function go(){const r=await fetch('/api/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:document.getElementById('c').value})});if(r.ok)location.reload();else document.getElementById('m').textContent='코드가 틀렸습니다';}
+document.getElementById('c').addEventListener('keydown',e=>{if(e.key==='Enter')go();});</script></body></html>

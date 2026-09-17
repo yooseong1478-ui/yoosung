@@ -18,10 +18,13 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from viewer import BrowserViewer  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 BOT = HERE.parent
@@ -31,6 +34,8 @@ WORK = BOT / "work"
 WORK.mkdir(exist_ok=True)
 PY = sys.executable
 CLOUD = os.environ.get("NAVER_BOT_CLOUD") == "1" or os.environ.get("CODESPACES") == "true"
+HEADED = bool(os.environ.get("DISPLAY")) and not CLOUD      # 로컬 PC 에서만 창을 띄움
+ACCESS_CODE = os.environ.get("ACCESS_CODE", "").strip()      # 설정하면 페이지 접속 시 코드 입력 필요
 
 
 def novnc_url():
@@ -50,6 +55,17 @@ STATE = {"busy": "", "logged_in": None, "login_id": "", "keyword": "", "work": "
          "claude_logged_in": None, "claude_login_state": "idle", "claude_login_url": "", "claude_login_msg": ""}
 LOCK = threading.Lock()
 CLAUDE = {"proc": None, "master": None, "buf": ""}
+
+
+@app.middleware("http")
+async def access_gate(request: Request, call_next):
+    """ACCESS_CODE 가 설정된 경우, 쿠키가 맞아야 API/페이지를 쓸 수 있다 (공개 URL 보호)."""
+    if ACCESS_CODE and request.url.path not in ("/api/unlock",):
+        if request.cookies.get("ac") != ACCESS_CODE:
+            if request.url.path == "/":
+                return HTMLResponse((HERE / "unlock.html").read_text(encoding="utf-8"))
+            return JSONResponse({"error": "locked"}, status_code=401)
+    return await call_next(request)
 
 
 def log(msg):
@@ -80,7 +96,8 @@ def check_login():
     """저장된 프로필로 네이버에 로그인돼 있는지 확인 (헤드리스)."""
     from playwright.sync_api import sync_playwright
     with sync_playwright() as pw:
-        ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=True)
+        ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=True, executable_path=os.environ.get("PW_CHROMIUM") or None,
+                                                    args=["--no-sandbox", "--disable-dev-shm-usage"])
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
             page.goto("https://blog.naver.com/GoBlogWrite.naver", wait_until="domcontentloaded", timeout=30000)
@@ -98,9 +115,20 @@ def check_login():
     log("네이버 로그인 상태: " + ("로그인됨" if STATE["logged_in"] else "로그인 필요"))
 
 
+VIEWER = BrowserViewer(PROFILE, on_done=lambda: check_login(), log=log)
+
+
 def do_login():
     """창을 띄워 사용자가 직접 로그인하게 하고, 로그인되면 닫는다 (세션은 .browser_profile 에 저장)."""
     from playwright.sync_api import sync_playwright
+    if not HEADED:
+        # 클라우드/서버: 페이지 안 뷰어로 로그인 화면을 스트리밍한다
+        if VIEWER.start("login"):
+            log("페이지 안에 네이버 로그인 화면을 띄웠습니다. 화면을 클릭해 아이디와 비밀번호를 입력하세요. 인증 문자가 오면 그 화면에서 입력하면 됩니다.")
+            while VIEWER.active:
+                time.sleep(0.5)
+            log(VIEWER.message or "로그인 화면 종료")
+        return
     if CLOUD:
         log("로그인 창을 원격 화면에 띄웠습니다. '로그인 화면 보기' 버튼으로 화면을 열어 네이버 로그인을 완료해 주세요 (최대 10분).")
         log("해외 IP 접속이라 '새로운 기기 로그인' 인증(문자/이메일)이 뜰 수 있습니다. 그 화면에서 그대로 진행하면 됩니다.")
@@ -310,9 +338,15 @@ def do_publish(mode):
         return
     flag = "--draft" if mode == "draft" else "--publish"
     log(("임시저장" if mode == "draft" else "발행") + " 시작 (브라우저 창이 뜹니다" + (", 원격 화면에서 볼 수 있습니다" if CLOUD else "") + ")...")
-    r = subprocess.run([PY, str(BOT / "publish_post.py"), str(work / "final.json"), flag, "--shot-dir", str(work / "shots")],
-                       capture_output=True, text=True, encoding="utf-8", cwd=BOT)
+    cmd = [PY, str(BOT / "publish_post.py"), str(work / "final.json"), flag, "--shot-dir", str(work / "shots")]
+    if not HEADED:
+        cmd.append("--headless")
+    env = dict(os.environ)
+    if not HEADED:
+        env.pop("DISPLAY", None)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", cwd=BOT, env=env)
     out_all = (r.stderr or "") + (r.stdout or "")
+    shots = sorted(p.name for p in (work / "shots").glob("*.png")) if (work / "shots").exists() else []
     for line in out_all.splitlines():
         if line.strip():
             log(line.strip())
@@ -320,14 +354,16 @@ def do_publish(mode):
     if r.returncode == 0:
         STATE["last_publish"] = (r.stdout or "").strip().splitlines()[-1] if (r.stdout or "").strip() else "완료"
         STATE["publish_result"] = {"name": work.name, "mode": mode, "ok": True, "url": m.group(0) if m else "",
-                                   "msg": "발행 완료" if mode != "draft" else "임시저장 완료. 네이버 글쓰기 → 임시저장 글 목록에서 확인하세요."}
+                                   "msg": "발행 완료" if mode != "draft" else "임시저장 완료. 네이버 글쓰기 → 임시저장 글 목록에서 확인하세요.",
+                                   "shots": [f"/work/{work.name}/shots/{s}" for s in shots]}
     else:
         if "로그인이 필요" in out_all:
             STATE["logged_in"] = False
             msg = "네이버 로그인이 풀렸습니다. 1단계 로그인을 다시 해 주세요."
         else:
             msg = "올리는 중 문제가 생겼습니다. 아래 로그 마지막 줄을 보내 주세요."
-        STATE["publish_result"] = {"name": work.name, "mode": mode, "ok": False, "url": "", "msg": msg}
+        STATE["publish_result"] = {"name": work.name, "mode": mode, "ok": False, "url": "", "msg": msg,
+                                   "shots": [f"/work/{work.name}/shots/{s}" for s in shots]}
         log(msg)
 
 
@@ -364,6 +400,55 @@ def login():
 @app.post("/api/check_login")
 def check():
     return {"started": run_bg("check", check_login)}
+
+
+# ---- 페이지 안 브라우저 뷰어 (네이버 로그인용)
+class ViewInput(BaseModel):
+    type: str
+    x: float = 0
+    y: float = 0
+    text: str = ""
+    key: str = ""
+    dy: float = 0
+    url: str = ""
+
+
+@app.post("/api/view/start")
+def view_start(target: str = "login", url: str = ""):
+    if target == "login":
+        return {"started": run_bg("login", do_login)}
+    return {"started": VIEWER.start("test", url)}          # 점검용: 임의 페이지 스트리밍
+
+
+@app.post("/api/view/stop")
+def view_stop():
+    VIEWER.stop()
+    return {"ok": True}
+
+
+@app.get("/api/view/frame")
+def view_frame():
+    return {"active": VIEWER.active, "status": VIEWER.status, "message": VIEWER.message, "url": VIEWER.url,
+            "frame": VIEWER.frame_b64, "w": 1000, "h": 720}
+
+
+@app.post("/api/view/input")
+def view_input(inp: ViewInput):
+    VIEWER.send(inp.model_dump())
+    return {"ok": True}
+
+
+class UnlockReq(BaseModel):
+    code: str
+
+
+@app.post("/api/unlock")
+def unlock(req: UnlockReq):
+    if ACCESS_CODE and req.code.strip() == ACCESS_CODE:
+        resp = JSONResponse({"ok": True})
+        resp.set_cookie("ac", ACCESS_CODE, max_age=60 * 60 * 24 * 365, httponly=True, samesite="lax")
+        return resp
+    return JSONResponse({"ok": False}, status_code=401)
 
 
 class CodeReq(BaseModel):
@@ -477,4 +562,4 @@ if __name__ == "__main__":
         threading.Thread(target=check_claude, daemon=True).start()
     else:
         threading.Timer(2.0, lambda: run_bg("check", check_login)).start()   # 켜지면 네이버 로그인 상태부터 확인
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    uvicorn.run(app, host="0.0.0.0" if CLOUD else "127.0.0.1", port=port, log_level="warning")

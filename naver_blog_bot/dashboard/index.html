@@ -32,8 +32,12 @@
   .preview .ph{background:#fff7ed;color:#9a3412;padding:6px 10px;border-radius:6px;font-size:13px;margin:8px 0}
   .busy{color:var(--warn);font-size:13px;margin-left:8px}
   .hint{font-size:13px;color:var(--muted);margin:0}
-  .screen{margin-top:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:520px;background:#111}
-  .screen iframe{width:100%;height:100%;border:0}
+  .viewwrap{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#111;max-width:1000px}
+  .viewwrap img{width:100%;display:block;cursor:crosshair;user-select:none}
+  .typebar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .typebar input{flex:1;min-width:220px}
+  .typebar button{margin-top:0;padding:8px 12px}
+  .shots img{max-width:320px;border:1px solid var(--line);border-radius:6px;margin:6px 6px 0 0}
   .post{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px}
   .post b{font-size:15px}
   .post .meta{font-size:12.5px;color:var(--muted);margin-top:4px}
@@ -58,8 +62,19 @@
         <p class="hint" id="loginHint">버튼을 누르면 아래에 로그인 화면이 열립니다. 그 화면에서 네이버 아이디와 비밀번호로 로그인하세요. "새로운 기기" 인증 문자가 오면 거기서 입력하면 됩니다. 한 번만 하면 저장됩니다.</p>
         <button class="naver" id="btnLoginS" onclick="startLogin()">네이버 로그인 하기</button>
         <button class="secondary" onclick="post('/api/check_login')">로그인 됐는지 다시 확인</button>
-        <button class="secondary" onclick="if(novnc) window.open(novnc,'_blank')">로그인 화면이 안 보이면 새 탭으로 열기</button>
-        <div id="screenBox" class="screen" style="display:none"><iframe id="screenFrame" title="원격 화면"></iframe></div>
+        <div id="screenBox" style="display:none;margin-top:12px">
+          <div class="hint" id="viewMsg">화면을 불러오는 중... 아래 화면을 클릭한 뒤 아이디를 입력하세요.</div>
+          <div class="viewwrap"><img id="viewImg" alt="네이버 로그인 화면" draggable="false"></div>
+          <div class="typebar">
+            <input id="typeText" placeholder="여기에 입력하고 Enter → 화면에 그대로 입력됩니다 (아이디·비밀번호·인증번호)">
+            <button class="secondary" onclick="sendType()">입력</button>
+            <button class="secondary" onclick="sendKey('Enter')">Enter</button>
+            <button class="secondary" onclick="sendKey('Tab')">Tab</button>
+            <button class="secondary" onclick="sendKey('Backspace')">지우기</button>
+            <button class="secondary" onclick="post('/api/view/stop')">닫기</button>
+          </div>
+          <p class="hint">사용법: 화면에서 아이디 칸을 클릭 → 위 입력칸에 아이디를 쓰고 Enter → 비밀번호 칸 클릭 → 비밀번호 입력 → 로그인 버튼 클릭. 키보드로 직접 쳐도 됩니다.</p>
+        </div>
       </div>
 
       <div class="card full">
@@ -175,13 +190,35 @@ async function loadSample(){
   const r=await (await fetch('/api/load_sample/'+encodeURIComponent(name),{method:'POST'})).json();
   if(!r.ok) alert(r.error||'실패');
 }
-function showScreen(){
-  if(!novnc) return;
-  const box=document.getElementById('screenBox');
-  if(!screenOpen){ document.getElementById('screenFrame').src=novnc; screenOpen=true; }
-  box.style.display='block';
+// ---- 페이지 안 브라우저 뷰어 (서버가 찍은 화면을 보여 주고, 클릭/입력을 서버로 보냄)
+let viewTimer=null, VW=1000, VH=720;
+function showScreen(){ document.getElementById('screenBox').style.display='block'; if(!viewTimer) pollView(); }
+function hideScreen(){ document.getElementById('screenBox').style.display='none'; if(viewTimer){clearTimeout(viewTimer); viewTimer=null;} }
+async function pollView(){
+  try{
+    const f=await (await fetch('/api/view/frame')).json();
+    VW=f.w; VH=f.h;
+    const vi=document.getElementById('viewImg');
+    if(f.frame){ vi.src='data:image/jpeg;base64,'+f.frame; vi.style.display='block'; } else { vi.style.display='none'; }
+    const m=document.getElementById('viewMsg');
+    if(f.active){ m.textContent='아래 화면을 클릭한 뒤 입력하세요. 현재 주소: '+(f.url||'').slice(0,60); }
+    else if(f.status==='done'){ m.textContent='로그인 완료! 잠시 후 이 화면이 닫힙니다.'; viewTimer=setTimeout(hideScreen,2500); return; }
+    else if(f.status==='error'){ m.textContent=f.message||'오류'; }
+    else { m.textContent='화면을 준비하는 중...'; }
+  }catch(e){}
+  viewTimer=setTimeout(pollView,350);
 }
-function hideScreen(){ document.getElementById('screenBox').style.display='none'; }
+function viewInput(payload){ fetch('/api/view/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }
+function sendType(){ const el=document.getElementById('typeText'); if(!el.value) return; viewInput({type:'type',text:el.value}); el.value=''; }
+function sendKey(k){ viewInput({type:'key',key:k}); }
+document.addEventListener('DOMContentLoaded',()=>{
+  const img=document.getElementById('viewImg');
+  img.addEventListener('click',e=>{ const r=img.getBoundingClientRect(); viewInput({type:'click',x:(e.clientX-r.left)*VW/r.width,y:(e.clientY-r.top)*VH/r.height}); img.focus(); });
+  img.tabIndex=0;
+  img.addEventListener('keydown',e=>{ if(e.key.length===1){viewInput({type:'type',text:e.key}); e.preventDefault();} else if(['Enter','Backspace','Tab','ArrowDown','ArrowUp','Escape'].includes(e.key)){viewInput({type:'key',key:e.key}); e.preventDefault();} });
+  img.addEventListener('wheel',e=>{ viewInput({type:'scroll',dy:e.deltaY}); e.preventDefault(); },{passive:false});
+  document.getElementById('typeText').addEventListener('keydown',e=>{ if(e.key==='Enter'){ sendType(); viewInput({type:'key',key:'Enter'}); } });
+});
 async function startLogin(){
   const j=await post('/api/login');
   if(j.started!==false) showScreen();
@@ -189,7 +226,7 @@ async function startLogin(){
 async function publishNamed(name, mode){
   if(mode==='publish' && !confirm('지금 바로 공개 발행할까요?')) return;
   const j=await post('/api/publish_post/'+encodeURIComponent(name)+'/'+mode);
-  if(j.started!==false){ document.getElementById('pubResultS').innerHTML=''; showScreen(); }
+  if(j.started!==false){ document.getElementById('pubResultS').innerHTML='<div class="result">네이버에 올리는 중입니다 (1~3분). 끝나면 여기에 결과가 표시됩니다.</div>'; }
 }
 async function previewNamed(name){
   await fetch('/api/load_sample/'+encodeURIComponent(name),{method:'POST'});
@@ -240,15 +277,15 @@ function renderLogin(s){
   document.getElementById('loginHint').textContent = s.logged_in
     ? '네이버 로그인이 저장되어 있습니다. 바로 2단계로 가세요.'
     : '버튼을 누르면 아래에 로그인 화면이 열립니다. 그 화면에서 네이버 아이디와 비밀번호로 로그인하세요. "새로운 기기" 인증 문자가 오면 거기서 입력하면 됩니다. 한 번만 하면 저장됩니다.';
-  if(s.logged_in && s.busy!=='publish') hideScreen();
+  if(s.logged_in && s.busy!=='login') hideScreen();
 }
 function renderPublishResult(s){
   const r=s.publish_result; const el=document.getElementById('pubResultS');
   if(!r){ return; }
   const link = r.url?` <a href="${esc(r.url)}" target="_blank">글 보기</a>`:'';
-  el.innerHTML=`<div class="result ${r.ok?'':'bad'}">${esc(r.msg)}${link}</div>`;
+  const shots=(r.shots||[]).map(s=>`<a href="${s}" target="_blank"><img src="${s}"></a>`).join('');
+  el.innerHTML=`<div class="result ${r.ok?'':'bad'}">${esc(r.msg)}${link}</div>`+(shots?`<div class="shots">${shots}</div>`:'');
   const s2=document.getElementById('s2'); if(r.ok){ s2.className='step done'; s2.textContent='✓'; }
-  if(r.ok) hideScreen();
 }
 async function tick(){
   try{

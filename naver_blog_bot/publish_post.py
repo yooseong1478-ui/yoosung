@@ -121,7 +121,9 @@ def main():
 
     write_url = f"https://blog.naver.com/{args.blog_id}?Redirect=Write&" if args.blog_id else "https://blog.naver.com/GoBlogWrite.naver"
     with sync_playwright() as pw:
-        ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=args.headless, viewport={"width": 1280, "height": 900})
+        ctx = pw.chromium.launch_persistent_context(str(PROFILE), headless=args.headless, viewport={"width": 1280, "height": 900},
+                                                    executable_path=os.environ.get("PW_CHROMIUM") or None,
+                                                    args=["--no-sandbox", "--disable-dev-shm-usage"] if args.headless else [])
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         shot_dir = Path(args.shot_dir) if args.shot_dir else None
         if shot_dir:
