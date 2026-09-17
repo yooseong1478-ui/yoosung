@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>네이버 블로그 자동화</title>
 <style>
-  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--accent:#2563eb;--ok:#16a34a;--warn:#d97706;--line:#e5e7eb}
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--accent:#2563eb;--naver:#03c75a;--naver-ink:#0b3d21;--ok:#16a34a;--warn:#d97706;--line:#e5e7eb;--soft:#eef2ff}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:24px 16px}
   h1{font-size:22px;margin:0 0 4px}
@@ -13,47 +13,80 @@
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:800px){.grid{grid-template-columns:1fr}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
-  .card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .step{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;align-items:center;justify-content:center}
+  .step.done{background:var(--ok)}
   label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
-  input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  input,select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
   button{padding:10px 16px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:14px;cursor:pointer;margin-top:12px}
   button.secondary{background:#e5e7eb;color:var(--ink)}
   button.ok{background:var(--ok)}
+  button.naver{background:var(--naver);color:var(--naver-ink);font-weight:700;font-size:16px;padding:14px 22px}
   button:disabled{opacity:.5;cursor:not-allowed}
   .badge{font-size:12px;padding:3px 8px;border-radius:999px;background:#fee2e2;color:#991b1b}
   .badge.on{background:#dcfce7;color:#166534}
-  .log{background:#0f172a;color:#e2e8f0;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:12px;border-radius:8px;height:260px;overflow:auto;white-space:pre-wrap}
+  .log{background:#0f172a;color:#e2e8f0;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:12px;border-radius:8px;height:220px;overflow:auto;white-space:pre-wrap}
   .list{font-size:13px;line-height:1.6;max-height:180px;overflow:auto}
   .preview{font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px}
   .preview img{max-width:100%;border-radius:6px;display:block;margin:8px 0}
   .preview .ph{background:#fff7ed;color:#9a3412;padding:6px 10px;border-radius:6px;font-size:13px;margin:8px 0}
   .busy{color:var(--warn);font-size:13px;margin-left:8px}
+  .hint{font-size:13px;color:var(--muted);margin:0}
+  .screen{margin-top:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:520px;background:#111}
+  .screen iframe{width:100%;height:100%;border:0}
+  .post{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px}
+  .post b{font-size:15px}
+  .post .meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .result{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--soft);font-size:13.5px}
+  .result.bad{background:#fee2e2}
+  details{margin-top:16px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  .full{grid-column:1 / -1}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>네이버 블로그 자동화 <span id="busy" class="busy"></span></h1>
-  <p class="sub">로그인 → 글감 찾기 → 글 쓰기 → 발행. 각 단계는 버튼 한 번이면 됩니다. 발행 전에 미리보기에서 사진 자리를 확인하세요.</p>
+  <p class="sub" id="subtitle">로그인 → 글감 찾기 → 글 쓰기 → 발행. 각 단계는 버튼 한 번이면 됩니다.</p>
 
+  <!-- ===== 간단 모드 (클라우드 기본): 네이버 로그인 → 글 올리기 ===== -->
+  <div id="simple" style="display:none">
+    <div class="grid">
+      <div class="card full">
+        <h2><span id="s1" class="step">1</span> 네이버 로그인 <span id="loginBadgeS" class="badge">확인 중</span></h2>
+        <p class="hint" id="loginHint">버튼을 누르면 아래에 로그인 화면이 열립니다. 그 화면에서 네이버 아이디와 비밀번호로 로그인하세요. "새로운 기기" 인증 문자가 오면 거기서 입력하면 됩니다. 한 번만 하면 저장됩니다.</p>
+        <button class="naver" id="btnLoginS" onclick="startLogin()">네이버 로그인 하기</button>
+        <button class="secondary" onclick="post('/api/check_login')">로그인 됐는지 다시 확인</button>
+        <div id="screenBox" class="screen" style="display:none"><iframe id="screenFrame" title="원격 화면"></iframe></div>
+      </div>
+
+      <div class="card full">
+        <h2><span id="s2" class="step">2</span> 글 올리기</h2>
+        <p class="hint">올릴 글을 고르고 버튼을 누르면 사이트가 네이버 에디터에 글과 이미지를 넣어 줍니다. 임시저장은 네이버 "임시저장 글"에 들어가고, 발행은 바로 공개됩니다. 직접 찍은 사진 자리는 "(사진 넣기: …)" 로 들어가니 임시저장 후 채우는 것을 권합니다.</p>
+        <div id="postsBox"></div>
+        <div id="pubResultS"></div>
+      </div>
+    </div>
+    <details><summary>고급 기능 열기 (글감 찾기 · AI 글쓰기 · Claude 연결)</summary><div id="advSlot"></div></details>
+  </div>
+
+  <!-- ===== 전체 모드 (로컬 기본 / 고급) ===== -->
+  <div id="fullMode">
   <div class="grid">
-    <div class="card">
+    <div class="card" id="cardNaver">
       <h2><span class="step">1</span> 네이버 로그인 <span id="loginBadge" class="badge">확인 중</span></h2>
-      <p style="font-size:13px;color:var(--muted);margin:0">버튼을 누르면 로그인 창이 뜹니다. 로그인하면 창이 자동으로 닫히고 세션이 이 PC에 저장됩니다.</p>
+      <p class="hint">버튼을 누르면 로그인 창이 뜹니다. 로그인하면 창이 자동으로 닫히고 세션이 이 PC에 저장됩니다.</p>
       <button onclick="post('/api/login')">네이버 로그인 창 열기</button>
       <button class="secondary" onclick="post('/api/check_login')">상태 다시 확인</button>
       <div id="cloudLogin" style="display:none">
-        <p style="font-size:13px;color:var(--muted);margin:12px 0 0">클라우드에서 실행 중이라 로그인 창이 원격 화면에 뜹니다. 위 버튼을 누른 뒤 아래 버튼으로 화면을 열어 로그인하세요.</p>
+        <p class="hint" style="margin-top:12px">클라우드에서 실행 중이라 로그인 창이 원격 화면에 뜹니다.</p>
         <button class="ok" onclick="window.open(novnc,'_blank')">로그인 화면 보기 (새 탭)</button>
-        <div id="novncBox" style="margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:360px;display:none">
-          <iframe id="novncFrame" style="width:100%;height:100%;border:0"></iframe>
-        </div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardClaude">
       <h2><span class="step">1</span> Claude 연결 <span id="claudeBadge" class="badge">확인 중</span></h2>
-      <p style="font-size:13px;color:var(--muted);margin:0">글쓰기 단계가 Claude 구독으로 동작합니다. 시작 → 링크 열어 승인 → 나온 코드를 붙여넣기.</p>
+      <p class="hint">글쓰기 단계가 Claude 구독으로 동작합니다. 시작 → 링크 열어 승인 → 나온 코드를 붙여넣기.</p>
       <button onclick="post('/api/claude/login')">Claude 로그인 시작</button>
       <button class="secondary" onclick="post('/api/claude/check')">상태 다시 확인</button>
       <div id="claudeFlow" style="display:none;margin-top:10px">
@@ -66,7 +99,7 @@
       <div id="claudeMsg" style="font-size:13px;color:var(--warn);margin-top:8px"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardResearch">
       <h2><span class="step">2</span> 글감 찾기</h2>
       <label>관심 분야 / 검색 키워드</label>
       <input id="topic" placeholder="예: 남자보정속옷">
@@ -78,22 +111,23 @@
       <div id="cands" class="list"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardWrite">
       <h2><span class="step">3</span> 글 쓰기</h2>
-      <p style="font-size:13px;color:var(--muted);margin:0">모은 인기 글의 패턴(제목, 길이, 사진 수, 키워드)을 분석해 내 제품 기준으로 새 글을 쓰고, 정보성 이미지는 슬라이드로 만듭니다.</p>
+      <p class="hint">모은 인기 글의 패턴(제목, 길이, 사진 수, 키워드)을 분석해 내 제품 기준으로 새 글을 쓰고, 정보성 이미지는 슬라이드로 만듭니다.</p>
       <button onclick="post('/api/write')">AI 팀에게 글 쓰기 시키기</button>
-      <div style="margin-top:14px;font-size:13px;color:var(--muted)">또는 이미 만들어 둔 글을 바로 불러오기</div>
-      <select id="sample" style="padding:8px;border:1px solid var(--line);border-radius:8px;margin-top:6px;font-size:13px"></select>
+      <div class="hint" style="margin-top:14px">또는 이미 만들어 둔 글을 바로 불러오기</div>
+      <select id="sample" style="margin-top:6px"></select>
       <button class="secondary" onclick="loadSample()">준비된 글 불러오기</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="cardPublish">
       <h2><span class="step">4</span> 발행</h2>
-      <p style="font-size:13px;color:var(--muted);margin:0">임시저장은 네이버 임시저장 목록에 넣고 멈춥니다. 직접 찍은 사진을 넣은 뒤 발행하는 것을 권장합니다.</p>
+      <p class="hint">임시저장은 네이버 임시저장 목록에 넣고 멈춥니다. 직접 찍은 사진을 넣은 뒤 발행하는 것을 권장합니다.</p>
       <button class="secondary" onclick="post('/api/publish/draft')">임시저장</button>
       <button class="ok" onclick="if(confirm('지금 바로 발행할까요?')) post('/api/publish/publish')">바로 발행</button>
       <div id="pubResult" style="font-size:13px;margin-top:8px"></div>
     </div>
+  </div>
   </div>
 
   <div class="card" style="margin-top:16px">
@@ -108,17 +142,19 @@
 </div>
 
 <script>
+let lastFinal='', novnc='', cloud=false, screenOpen=false, simpleArranged=false;
 async function post(url, body){
   const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body: body?JSON.stringify(body):null});
   const j = await r.json();
-  if(j.started===false) alert('다른 작업이 진행 중입니다. 로그를 확인하세요.');
+  if(j.started===false) alert('다른 작업이 진행 중입니다. 잠시 후 다시 누르세요.');
+  return j;
 }
 function research(){
   const topic=document.getElementById('topic').value.trim();
   if(!topic){alert('키워드를 입력하세요');return;}
   post('/api/research',{topic, product_url:document.getElementById('product').value.trim(), memo:document.getElementById('memo').value.trim()});
 }
-function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function renderPreview(f){
   if(!f||!f.title){return;}
   let body=esc(f.body);
@@ -126,11 +162,58 @@ function renderPreview(f){
   body=body.replace(/\[\[PHOTO:([^\]]+)\]\]/g,(m,d)=>`<div class="ph">📷 직접 찍을 사진: ${d}</div>`);
   document.getElementById('preview').innerHTML=`<b style="font-size:18px">${esc(f.title)}</b>\n\n${body}\n\n<span style="color:#2563eb">${esc(f.hashtags||'')}</span>`;
 }
-let lastFinal='', novnc='', novncShown=false;
 async function submitClaudeCode(){
   const code=document.getElementById('claudeCode').value.trim();
   if(!code){alert('코드를 붙여넣으세요');return;}
   await post('/api/claude/code',{code});
+}
+async function loadSample(){
+  const name=document.getElementById('sample').value;
+  if(!name){alert('불러올 글이 없습니다');return;}
+  const r=await (await fetch('/api/load_sample/'+encodeURIComponent(name),{method:'POST'})).json();
+  if(!r.ok) alert(r.error||'실패');
+}
+function showScreen(){
+  if(!novnc) return;
+  const box=document.getElementById('screenBox');
+  if(!screenOpen){ document.getElementById('screenFrame').src=novnc; screenOpen=true; }
+  box.style.display='block';
+}
+function hideScreen(){ document.getElementById('screenBox').style.display='none'; }
+async function startLogin(){
+  const j=await post('/api/login');
+  if(j.started!==false) showScreen();
+}
+async function publishNamed(name, mode){
+  if(mode==='publish' && !confirm('지금 바로 공개 발행할까요?')) return;
+  const j=await post('/api/publish_post/'+encodeURIComponent(name)+'/'+mode);
+  if(j.started!==false){ document.getElementById('pubResultS').innerHTML=''; showScreen(); }
+}
+async function previewNamed(name){
+  await fetch('/api/load_sample/'+encodeURIComponent(name),{method:'POST'});
+  document.getElementById('preview').scrollIntoView({behavior:'smooth'});
+}
+let postsLoaded=false;
+async function loadPosts(){
+  const items=await (await fetch('/api/posts')).json();
+  const box=document.getElementById('postsBox');
+  if(!items.length){ box.innerHTML='<div class="hint">올릴 글이 아직 없습니다. Claude 대화에서 글을 만들어 올리면 여기 나타납니다.</div>'; return; }
+  box.innerHTML=items.map(p=>`<div class="post"><b>${esc(p.title)}</b>
+    <div class="meta">${p.date} · 본문 ${p.chars}자 · 이미지 ${p.images}장 준비됨 · 직접 찍을 사진 ${p.photos}곳</div>
+    <button class="secondary" onclick="previewNamed('${esc(p.name)}')">미리보기</button>
+    <button onclick="publishNamed('${esc(p.name)}','draft')">임시저장</button>
+    <button class="ok" onclick="publishNamed('${esc(p.name)}','publish')">발행</button></div>`).join('');
+  postsLoaded=true;
+}
+function arrangeSimple(){
+  if(simpleArranged) return; simpleArranged=true;
+  document.getElementById('simple').style.display='block';
+  const full=document.getElementById('fullMode');
+  document.getElementById('advSlot').appendChild(full);
+  document.getElementById('cardNaver').style.display='none';
+  document.getElementById('cardPublish').style.display='none';
+  document.getElementById('subtitle').textContent='네이버 로그인 한 번 → 글 고르고 올리기. 두 단계면 끝납니다.';
+  loadPosts();
 }
 function renderClaude(s){
   const b=document.getElementById('claudeBadge');
@@ -140,26 +223,39 @@ function renderClaude(s){
   const flow=document.getElementById('claudeFlow');
   const st=s.claude_login_state;
   flow.style.display=(st==='waiting_code'||st==='verifying')?'block':'none';
-  if(s.claude_login_url){const a=document.getElementById('claudeLink'); a.href=s.claude_login_url;}
+  if(s.claude_login_url){document.getElementById('claudeLink').href=s.claude_login_url;}
   document.getElementById('claudeMsg').textContent = st==='starting'?'로그인 링크를 준비하는 중...':(st==='verifying'?'코드 확인 중...':(s.claude_login_msg||''));
+}
+function renderLogin(s){
+  for(const id of ['loginBadge','loginBadgeS']){
+    const b=document.getElementById(id);
+    if(s.logged_in===null){b.textContent='확인 중';b.className='badge';}
+    else if(s.logged_in){b.textContent='로그인됨 '+(s.login_id||'');b.className='badge on';}
+    else{b.textContent='로그인 필요';b.className='badge';}
+  }
+  const s1=document.getElementById('s1'); s1.className='step'+(s.logged_in?' done':''); s1.textContent=s.logged_in?'✓':'1';
+  document.getElementById('btnLoginS').style.display = s.logged_in?'none':'inline-block';
+  document.getElementById('loginHint').textContent = s.logged_in
+    ? '네이버 로그인이 저장되어 있습니다. 바로 2단계로 가세요.'
+    : '버튼을 누르면 아래에 로그인 화면이 열립니다. 그 화면에서 네이버 아이디와 비밀번호로 로그인하세요. "새로운 기기" 인증 문자가 오면 거기서 입력하면 됩니다. 한 번만 하면 저장됩니다.';
+  if(s.logged_in && s.busy!=='publish') hideScreen();
+}
+function renderPublishResult(s){
+  const r=s.publish_result; const el=document.getElementById('pubResultS');
+  if(!r){ return; }
+  const link = r.url?` <a href="${esc(r.url)}" target="_blank">글 보기</a>`:'';
+  el.innerHTML=`<div class="result ${r.ok?'':'bad'}">${esc(r.msg)}${link}</div>`;
+  const s2=document.getElementById('s2'); if(r.ok){ s2.className='step done'; s2.textContent='✓'; }
+  if(r.ok) hideScreen();
 }
 async function tick(){
   try{
     const s=await (await fetch('/api/status')).json();
-    document.getElementById('busy').textContent = s.busy?('작업 중: '+s.busy):'';
-    if(s.cloud){
-      novnc=s.novnc_url||'';
-      document.getElementById('cloudLogin').style.display='block';
-      if(novnc && !novncShown && s.busy==='login'){
-        novncShown=true; const box=document.getElementById('novncBox'); box.style.display='block';
-        document.getElementById('novncFrame').src=novnc;
-      }
-    }
-    renderClaude(s);
-    const b=document.getElementById('loginBadge');
-    if(s.logged_in===null){b.textContent='확인 중';b.className='badge';}
-    else if(s.logged_in){b.textContent='로그인됨 '+(s.login_id||'');b.className='badge on';}
-    else{b.textContent='로그인 필요';b.className='badge';}
+    cloud=!!s.cloud; novnc=s.novnc_url||'';
+    if(cloud) arrangeSimple();
+    document.getElementById('busy').textContent = s.busy?('작업 중: '+({login:'로그인',publish:'네이버에 올리는 중',research:'글감 수집',write:'글 쓰기',check:'확인'}[s.busy]||s.busy)):'';
+    if(cloud){ document.getElementById('cloudLogin').style.display='block'; }
+    renderLogin(s); renderClaude(s); renderPublishResult(s);
     document.getElementById('log').textContent=(s.log||[]).join('\n');
     const lg=document.getElementById('log'); lg.scrollTop=lg.scrollHeight;
     document.getElementById('cands').innerHTML=(s.candidates||[]).map(c=>`<div>${c.rank}. <a href="${c.url}" target="_blank">${esc(c.title||'')}</a> ${c.chars?`<span style="color:#6b7280">(${c.chars}자, 사진 ${c.images}장)</span>`:''}</div>`).join('');
@@ -169,15 +265,9 @@ async function tick(){
   }catch(e){}
   setTimeout(tick,2000);
 }
-async function loadSample(){
-  const name=document.getElementById('sample').value;
-  if(!name){alert('불러올 글이 없습니다');return;}
-  const r=await (await fetch('/api/load_sample/'+encodeURIComponent(name),{method:'POST'})).json();
-  if(!r.ok) alert(r.error||'실패');
-}
 (async()=>{
-  const names=await (await fetch('/api/samples')).json();
-  document.getElementById('sample').innerHTML=names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  try{ const names=await (await fetch('/api/samples')).json();
+    document.getElementById('sample').innerHTML=names.map(n=>`<option value="${n}">${n}</option>`).join(''); }catch(e){}
 })();
 tick();
 fetch('/api/check_login',{method:'POST'});

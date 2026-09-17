@@ -46,7 +46,7 @@ app.mount("/work", StaticFiles(directory=str(WORK)), name="work")
 
 LOG = deque(maxlen=400)
 STATE = {"busy": "", "logged_in": None, "login_id": "", "keyword": "", "work": "", "candidates": [], "final": None,
-         "last_publish": "", "cloud": CLOUD, "novnc_url": novnc_url(),
+         "last_publish": "", "publish_result": None, "cloud": CLOUD, "novnc_url": novnc_url(),
          "claude_logged_in": None, "claude_login_state": "idle", "claude_login_url": "", "claude_login_msg": ""}
 LOCK = threading.Lock()
 CLAUDE = {"proc": None, "master": None, "buf": ""}
@@ -312,13 +312,31 @@ def do_publish(mode):
     log(("임시저장" if mode == "draft" else "발행") + " 시작 (브라우저 창이 뜹니다" + (", 원격 화면에서 볼 수 있습니다" if CLOUD else "") + ")...")
     r = subprocess.run([PY, str(BOT / "publish_post.py"), str(work / "final.json"), flag, "--shot-dir", str(work / "shots")],
                        capture_output=True, text=True, encoding="utf-8", cwd=BOT)
-    for line in ((r.stderr or "") + (r.stdout or "")).splitlines():
+    out_all = (r.stderr or "") + (r.stdout or "")
+    for line in out_all.splitlines():
         if line.strip():
             log(line.strip())
+    m = re.search(r"https://blog\.naver\.com/\S+", r.stdout or "")
     if r.returncode == 0:
-        STATE["last_publish"] = (r.stdout or "").strip().splitlines()[-1] if r.stdout else "완료"
+        STATE["last_publish"] = (r.stdout or "").strip().splitlines()[-1] if (r.stdout or "").strip() else "완료"
+        STATE["publish_result"] = {"name": work.name, "mode": mode, "ok": True, "url": m.group(0) if m else "",
+                                   "msg": "발행 완료" if mode != "draft" else "임시저장 완료. 네이버 글쓰기 → 임시저장 글 목록에서 확인하세요."}
     else:
-        log("발행 단계 실패. 로그인 상태와 에디터를 확인하세요.")
+        if "로그인이 필요" in out_all:
+            STATE["logged_in"] = False
+            msg = "네이버 로그인이 풀렸습니다. 1단계 로그인을 다시 해 주세요."
+        else:
+            msg = "올리는 중 문제가 생겼습니다. 아래 로그 마지막 줄을 보내 주세요."
+        STATE["publish_result"] = {"name": work.name, "mode": mode, "ok": False, "url": "", "msg": msg}
+        log(msg)
+
+
+def do_publish_named(name, mode):
+    r = load_sample(name)
+    if not r.get("ok"):
+        log(f"글을 찾지 못했습니다: {name}")
+        return
+    do_publish(mode)
 
 
 # ------------------------------------------------------------------ API
@@ -400,6 +418,36 @@ def samples():
     return [p.name for p in sorted(d.iterdir()) if p.is_dir() and (p / "final.json").exists()]
 
 
+@app.get("/api/posts")
+def posts():
+    """올릴 수 있는 글 목록 (samples/*/final.json)."""
+    items = []
+    d = BOT / "samples"
+    for p in sorted(d.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+        fj = p / "final.json"
+        if not (p.is_dir() and fj.exists()):
+            continue
+        try:
+            f = json.loads(fj.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        imgs = f.get("images", [])
+        items.append({"name": p.name, "title": f.get("title", p.name),
+                      "images": sum(1 for i in imgs if i.get("type") in ("slide", "asset")),
+                      "photos": sum(1 for i in imgs if i.get("type") == "photo"),
+                      "chars": len(re.sub(r"\s|\[\[.*?\]\]", "", f.get("body", ""))),
+                      "date": time.strftime("%Y-%m-%d", time.localtime(fj.stat().st_mtime))})
+    return items
+
+
+@app.post("/api/publish_post/{name}/{mode}")
+def publish_named(name: str, mode: str):
+    if mode not in ("draft", "publish"):
+        return {"started": False, "error": "mode"}
+    STATE["publish_result"] = None
+    return {"started": run_bg("publish", do_publish_named, name, mode)}
+
+
 @app.post("/api/load_sample/{name}")
 def load_sample(name: str):
     """미리 만들어 둔 글(samples/<name>)을 작업 폴더로 복사해 바로 발행할 수 있게 한다."""
@@ -426,5 +474,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8787"))
     if not CLOUD:
         threading.Timer(1.5, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
-    threading.Thread(target=check_claude, daemon=True).start()
+        threading.Thread(target=check_claude, daemon=True).start()
+    else:
+        threading.Timer(2.0, lambda: run_bg("check", check_login)).start()   # 켜지면 네이버 로그인 상태부터 확인
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")

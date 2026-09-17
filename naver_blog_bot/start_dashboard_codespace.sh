@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Codespace 가 켜질 때마다 실행 (devcontainer postStartCommand). 대시보드를 백그라운드로 띄운다.
+# Codespace 가 켜질 때마다 실행 (devcontainer postStartCommand). 새 글을 받아오고 대시보드를 백그라운드로 띄운다.
 cd "$(dirname "$0")"
 mkdir -p work
+# 이 대화에서 새로 올린 글(samples/)이 목록에 보이도록 최신 상태로 맞춘다. 실패해도 계속 진행.
+(cd .. && git pull --ff-only -q 2>/dev/null) || echo "git pull 건너뜀 (로컬 변경 또는 네트워크)"
 if curl -sS -m 2 "http://127.0.0.1:${PORT:-8787}/api/status" >/dev/null 2>&1; then
   echo "대시보드가 이미 실행 중입니다."
   exit 0
