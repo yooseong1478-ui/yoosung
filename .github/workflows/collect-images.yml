@@ -1,0 +1,32 @@
+name: collect-images
+on:
+  workflow_dispatch:
+    inputs:
+      keyword:
+        default: "남자보정속옷"
+      brand_query:
+        default: "뉴슬림엑스"
+      prev_title:
+        description: "이전에 등록한 글 제목 (찾아서 비교)"
+        default: "남자 보정속옷 티 안나게 여유증 뱃살 잡아주는 뉴슬림엑스 언더셔츠 착용 후기"
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r naver_blog_bot/requirements.txt pillow
+      - name: Collect images of top posts, brand posts and previous post status
+        working-directory: naver_blog_bot
+        run: python3 collect_ci_images.py "${{ inputs.keyword }}" "${{ inputs.brand_query }}" "${{ inputs.prev_title }}"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase -q origin ${GITHUB_REF_NAME}
+          git add naver_blog_bot/collected
+          git commit -m "chore: collect images and previous post status [skip ci]" || echo "nothing to commit"
+          git push
