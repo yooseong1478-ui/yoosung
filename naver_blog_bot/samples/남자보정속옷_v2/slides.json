@@ -1,0 +1,178 @@
+[
+  {
+    "index": 1,
+    "type": "photo",
+    "note": "표지: 흰 티 위에 입고 찍은 정면 상반신. 얼굴 없이 목~허리. 상위글 1·2·3위 모두 첫 이미지가 이 컷",
+    "placeholder": "[사진: 흰 티 위에 뉴슬림엑스 입고 찍은 정면 상반신 컷]"
+  },
+  {
+    "index": 2,
+    "type": "photo",
+    "note": "택배 박스 개봉, 패키지 앞면 (상위글 패턴: 개봉 컷)",
+    "placeholder": "[사진: 택배 박스 개봉, 패키지 앞면]"
+  },
+  {
+    "index": 3,
+    "type": "photo",
+    "note": "패키지 뒷면 사이즈표·세탁표시 (뉴슬림엑스 박스 뒷면에 인쇄돼 있음)",
+    "placeholder": "[사진: 패키지 뒷면 사이즈표와 세탁 표시]"
+  },
+  {
+    "index": 4,
+    "type": "asset",
+    "file": "asset_04_product_white.jpg",
+    "placeholder": "[사진: 화이트 제품 상반신 공식 컷]"
+  },
+  {
+    "index": 5,
+    "type": "photo",
+    "note": "옷걸이에 건 제품 전체 컷 (상위글 2위 패턴)",
+    "placeholder": "[사진: 옷걸이에 걸어 둔 제품 전체 컷]"
+  },
+  {
+    "index": 6,
+    "type": "photo",
+    "note": "원단 결 클로즈업, 손으로 잡아당긴 컷",
+    "placeholder": "[사진: 원단 결 클로즈업]"
+  },
+  {
+    "index": 7,
+    "type": "asset",
+    "file": "asset_07_detail_grid.jpg",
+    "placeholder": "[사진: 디테일 4분할 공식 컷 (그물망, 2중 원단, 지퍼, 봉제)]"
+  },
+  {
+    "index": 8,
+    "type": "photo",
+    "note": "오른쪽 옆구리 지퍼 클로즈업",
+    "placeholder": "[사진: 오른쪽 옆구리 지퍼 클로즈업]"
+  },
+  {
+    "index": 9,
+    "type": "asset",
+    "file": "asset_09_compare_zipper.jpg",
+    "placeholder": "[사진: 일반 보정나시 vs 뉴슬림엑스 지퍼 비교 공식 컷]"
+  },
+  {
+    "index": 10,
+    "type": "slide",
+    "title": "사이즈 고르는 법",
+    "items": [
+      "평소 상의 사이즈 그대로",
+      "허리둘레 기준표 확인",
+      "S 28~31 / M 32~35 / L 36~38",
+      "XL 39~41 / 2XL 42~44 / 3XL 45~48",
+      "한 치수 줄이면 답답해요"
+    ],
+    "footnote": "출처: 뉴슬림엑스 공식 사이즈표",
+    "placeholder": "[사진: 사이즈 기준표 슬라이드]",
+    "file": "slide_10.png"
+  },
+  {
+    "index": 11,
+    "type": "photo",
+    "note": "목 안쪽 라벨 사이즈 표기 클로즈업 (상위글 3위 패턴)",
+    "placeholder": "[사진: 목 라벨 사이즈 표기 클로즈업]"
+  },
+  {
+    "index": 12,
+    "type": "slide",
+    "title": "두 라인 차이",
+    "items": [
+      "여유증보정 언더셔츠",
+      "→ 가슴 위주, 배는 순하게",
+      "상체보정 언더셔츠",
+      "→ 가슴 2겹 + 배 3겹 강력 보정",
+      "가슴+배 둘 다면 상체보정"
+    ],
+    "footnote": "출처: 공식몰 Q&A",
+    "placeholder": "[사진: 두 라인 비교 슬라이드 (여유증보정 vs 상체보정)]",
+    "file": "slide_12.png"
+  },
+  {
+    "index": 13,
+    "type": "slide",
+    "title": "입는 순서",
+    "items": [
+      "1. 발부터 넣고 바지처럼",
+      "2. 몸통을 조금씩 끌어올리기",
+      "3. 팔 → 머리 → 팔",
+      "4. 팔꿈치부터 넣으면 쉬움",
+      "5. 옆구리 지퍼 올리기"
+    ],
+    "footnote": "어깨를 당기면 늘어나요",
+    "placeholder": "[사진: 입는 순서 슬라이드]",
+    "file": "slide_13.png"
+  },
+  {
+    "index": 14,
+    "type": "photo",
+    "note": "착용 전: 셔츠 정면, 사진 위에 '착용 전' 글자 (overlay_label.py 로 넣기)",
+    "placeholder": "[사진: 착용 전 셔츠 정면 (사진 위 \"착용 전\" 글자)]"
+  },
+  {
+    "index": 15,
+    "type": "photo",
+    "note": "착용 후: 같은 셔츠 정면, '착용 후' 글자",
+    "placeholder": "[사진: 착용 후 셔츠 정면 (사진 위 \"착용 후\" 글자)]"
+  },
+  {
+    "index": 16,
+    "type": "asset",
+    "file": "asset_16_before_after.jpg",
+    "placeholder": "[사진: 공식 착용 전/후 옆모습 비교]"
+  },
+  {
+    "index": 17,
+    "type": "photo",
+    "note": "흰 티 위 가슴 부분 클로즈업 (상위글 1위 핵심 컷)",
+    "placeholder": "[사진: 흰 티 위 가슴 부분 클로즈업]"
+  },
+  {
+    "index": 18,
+    "type": "photo",
+    "note": "셔츠 위 옆모습, 배 라인",
+    "placeholder": "[사진: 셔츠 위 옆모습]"
+  },
+  {
+    "index": 19,
+    "type": "asset",
+    "file": "asset_19_model_side.jpg",
+    "placeholder": "[사진: 모델 옆모습 공식 컷]"
+  },
+  {
+    "index": 20,
+    "type": "slide",
+    "title": "세탁 방법",
+    "items": [
+      "미지근한 물 단독 손세탁",
+      "비틀지 않고 눌러 짜기",
+      "수건 사이에 넣어 물기 제거",
+      "직사광선 피해 실내 건조"
+    ],
+    "footnote": "출처: 공식 세탁 안내",
+    "placeholder": "[사진: 세탁법 슬라이드]",
+    "file": "slide_20.png"
+  },
+  {
+    "index": 21,
+    "type": "slide",
+    "title": "이런 분께 추천",
+    "items": [
+      "여유증으로 얇은 옷이 부담",
+      "뱃살 때문에 셔츠 핏 무너짐",
+      "니플패치가 번거로움",
+      "면접·결혼식·소개팅 앞둔 날",
+      "골프·운동 때 라인 정리"
+    ],
+    "footnote": "",
+    "placeholder": "[사진: 추천 대상 체크리스트 슬라이드]",
+    "file": "slide_21.png"
+  },
+  {
+    "index": 22,
+    "type": "photo",
+    "note": "정장 또는 니트 위 마무리 착용 컷",
+    "placeholder": "[사진: 정장 또는 니트 위 마무리 착용 컷]"
+  }
+]

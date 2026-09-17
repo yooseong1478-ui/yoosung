@@ -138,8 +138,36 @@ def lead_review_post(m):
 
 
 # ------------------------------------------------------------- 3. 이미지
+ASSETS = HERE / "assets" / "newslimx"
+
+
+def asset_list_text():
+    mf = ASSETS / "manifest.json"
+    if not mf.exists():
+        return "(없음)"
+    m = json.loads(read(mf))
+    return m.get("note", "") + "\n" + "\n".join(f"- {i['file']}: {i['desc']}" for i in m["images"])
+
+
+def place_assets(slides, work):
+    """type=asset 항목의 공식 이미지를 work/images 로 복사하고 file 을 파일명으로 맞춘다."""
+    import shutil
+    (work / "images").mkdir(parents=True, exist_ok=True)
+    for s in slides:
+        if s.get("type") == "asset" and s.get("file"):
+            src = ASSETS / Path(s["file"]).name
+            if src.exists():
+                dst = work / "images" / f"asset_{int(s['index']):02d}_{src.name}"
+                shutil.copy(src, dst)
+                s["file"] = dst.name
+            else:
+                s["type"], s["note"] = "photo", f"공식 이미지 {s['file']} 없음"
+                s.pop("file", None)
+
+
 def step_images(work, keyword, cfg):
     prompt = (f"{read(TEAM / '05_image_maker.md')}\n\n=== 이미지 스타일 ===\n{read(TEAM / '05_image_style.md')}\n\n"
+              f"=== 공식 이미지 목록 (asset 으로 사용 가능) ===\n{asset_list_text()}\n\n"
               f"=== post.md ===\n{read(work / 'post.md')}\n\nslides.json 배열만 출력하세요.")
     slides = extract_json(claude_p(prompt, cfg.get("claude_model", "")))
     placeholders = re.findall(r"\[사진:[^\]]*\]", read(work / "post.md"))
@@ -154,9 +182,11 @@ def step_images(work, keyword, cfg):
     for old in (work / "images").glob("slide_*.png"):   # 이전 실행 잔재 제거
         old.unlink()
     files = render(slides, work / "images", label=cfg.get("series_label", keyword), blog=cfg.get("blog_name", ""))
+    place_assets(slides, work)
     (work / "slides.json").write_text(json.dumps(slides, ensure_ascii=False, indent=2), encoding="utf-8")
     n_photo = sum(1 for s in slides if s.get("type") == "photo")
-    report("3단계 이미지", f"슬라이드 {len(files)}장 렌더링, 실사 필요 {n_photo}곳 (work/images)")
+    n_asset = sum(1 for s in slides if s.get("type") == "asset")
+    report("3단계 이미지", f"슬라이드 {len(files)}장 렌더링, 공식 이미지 {n_asset}장, 실사 필요 {n_photo}곳 (work/images)")
     return slides
 
 
@@ -180,8 +210,8 @@ def step_assemble(work):
         nonlocal k
         s = slides[k] if k < len(slides) else {"type": "photo"}
         k += 1
-        if s.get("type") == "slide" and s.get("file"):
-            images.append({"token": f"[[IMG:{s['file']}]]", "file": s["file"], "type": "slide"})
+        if s.get("type") in ("slide", "asset") and s.get("file"):
+            images.append({"token": f"[[IMG:{s['file']}]]", "file": s["file"], "type": s["type"]})
             return f"[[IMG:{s['file']}]]"
         images.append({"token": f"[[PHOTO:{m.group(1)}]]", "file": "", "type": "photo"})
         return f"[[PHOTO:{m.group(1)}]]"

@@ -1,0 +1,26 @@
+{
+  "brand": "뉴슬림엑스 (바디쉐이퍼 공식몰 bodyshaper.co.kr 제품 페이지에서 잘라낸 공식 이미지)",
+  "note": "브랜드 소유 이미지라 블로그에 사용 가능. 단 상위노출 글은 실사 위주이므로 한 글에 4~6장 이내로만 쓰고 나머지는 직접 찍은 사진과 슬라이드로 채울 것.",
+  "images": [
+    {"file": "model_front.jpg", "desc": "모델 정면 착용 컷 (화이트, 스튜디오)"},
+    {"file": "model_side.jpg", "desc": "모델 옆모습 착용 컷, 옆구리 지퍼 라인 보임"},
+    {"file": "model_back.jpg", "desc": "모델 뒷모습 착용 컷"},
+    {"file": "model_pair.jpg", "desc": "옆모습+정면 2컷 나란히"},
+    {"file": "model_side_closeup.jpg", "desc": "옆모습 상반신 클로즈업"},
+    {"file": "product_white.jpg", "desc": "화이트 제품 상반신 컷"},
+    {"file": "product_black.jpg", "desc": "블랙 제품 상반신 컷"},
+    {"file": "before_after.jpg", "desc": "공식 착용 전/후 옆모습 비교 (Before/After 라벨)"},
+    {"file": "compare_zipper.jpg", "desc": "일반 보정나시 vs 뉴슬림엑스 옆구리 지퍼 비교 설명 이미지"},
+    {"file": "detail_grid.jpg", "desc": "디테일 4분할: 그물망 직조, 2중 원단, 지퍼라인, 봉제라인"},
+    {"file": "fabric_texture.jpg", "desc": "원단 결 클로즈업 (화이트)"},
+    {"file": "fabric_double_layer.jpg", "desc": "2중 원단 경계 클로즈업"},
+    {"file": "layers_3ply.jpg", "desc": "겉감 1겹 + 보정 2겹 구조 일러스트와 복부 컷"},
+    {"file": "mesh_callout.jpg", "desc": "메쉬 직조 통기성 설명 일러스트"},
+    {"file": "package.jpg", "desc": "제품 패키지 앞뒤 + 수출 설명"},
+    {"file": "size_guide.jpg", "desc": "사이즈 선택 방법 (95 S / 100 M / 105 L)"},
+    {"file": "recommend_for.jpg", "desc": "이런 분께 권해드립니다 아이콘 8개"},
+    {"file": "care_guide.jpg", "desc": "착용법·세탁법 안내"},
+    {"file": "brand_intro.jpg", "desc": "브랜드 소개 상단 (로고, 체크리스트)"},
+    {"file": "brand_banner.jpg", "desc": "티셔츠 같은 보정속옷 뉴슬림엑스 배너"}
+  ]
+}
